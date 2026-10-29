@@ -39,16 +39,29 @@
    if(error){say('E-mel atau kata laluan tidak betul, atau pengesahan e-mel belum selesai.',true);return}
    await activate(data.session);
  });
+ let signupPending=false;
  $('#authSignupForm').addEventListener('submit',async e=>{
-   e.preventDefault();let f=new FormData(e.currentTarget),phone=String(f.get('phone')).trim();
+   e.preventDefault();if(signupPending)return;
+   let form=e.currentTarget,f=new FormData(form),phone=String(f.get('phone')).trim();
    if(!phone){say('Nombor telefon wajib diisi.',true);return}
+   let button=form.querySelector('[type="submit"]'),idleLabel=button.dataset.idleLabel||button.textContent;
+   button.dataset.idleLabel=idleLabel;signupPending=true;button.disabled=true;button.setAttribute('aria-busy','true');button.textContent='Menghantar permohonan…';
    say('Menghantar permohonan…');
-   let {data,error}=await client.auth.signUp({email:String(f.get('email')).trim(),password:String(f.get('password')),options:{data:{full_name:String(f.get('full_name')).trim(),phone,house_number:String(f.get('house_number'))}}});
-   if(error){say(error.message,true);return}
-   if(data.session) await activate(data.session); else say('Permohonan diterima. Semak e-mel untuk pengesahan, kemudian tunggu kelulusan AJK.');
+   let completed=false;
+   try{
+     let {data,error}=await client.auth.signUp({email:String(f.get('email')).trim(),password:String(f.get('password')),options:{data:{full_name:String(f.get('full_name')).trim(),phone,house_number:String(f.get('house_number'))}}});
+     if(error){say(error.message,true);return}
+     completed=true;
+     if(data.session) await activate(data.session); else say('Permohonan diterima. Semak e-mel untuk pengesahan, kemudian tunggu kelulusan AJK.');
+   }catch(error){say(error?.message||'Permohonan tidak dapat dihantar. Cuba lagi sebentar nanti.',true)}
+   finally{
+     signupPending=false;button.removeAttribute('aria-busy');
+     if(completed){button.textContent='Permohonan dihantar'}else{button.disabled=false;button.textContent=idleLabel}
+   }
  });
  document.addEventListener('click',e=>{let b=e.target.closest('[data-auth-switch]');if(b)switchForm(b.dataset.authSwitch)});
  $('#authSignOut').addEventListener('click',async()=>{await client.auth.signOut();location.reload()});
  client.auth.getSession().then(({data,error})=>{if(error)say('Tidak dapat menyambung ke Supabase: '+error.message,true);else if(data.session)activate(data.session)});
  client.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'&&document.documentElement.classList.contains('auth-configured'))say('Anda telah log keluar.')});
 })();
+
