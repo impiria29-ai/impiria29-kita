@@ -1,6 +1,3 @@
--- Aktifkan ucapan hari lahir umum dengan persetujuan setiap ahli keluarga.
--- Paparan hanya mengeluarkan nama, hubungan, dan MM-DD; tahun penuh tidak pernah dikembalikan.
-
 create or replace function public.get_public_birthdays()
 returns jsonb language plpgsql stable security definer set search_path = public, auth
 as $$
@@ -20,7 +17,7 @@ begin
     cross join lateral jsonb_array_elements(coalesce(h->'members','[]'::jsonb)) m
     where m->>'shareBirthday'='true'
   ) b
-  where s.state_key='impiria29' and coalesce(b.name,'')<>'' and coalesce(b.dob,'') ~ '^\\d{4}-\\d{2}-\\d{2}$';
+  where s.state_key='impiria29' and coalesce(b.name,'')<>'' and coalesce(b.dob,'') ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$';
   return v_birthdays;
 end;
 $$;
