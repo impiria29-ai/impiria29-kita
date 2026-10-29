@@ -13,3 +13,4 @@ Static, mobile-first community app for Taman Anggerik Permai 1. GitHub Pages dep
 No build step is required. The Supabase publishable key in `site/supabase-config.js` is browser-facing by design; never add a secret/service-role key. Do not put resident records in the repository. The database starts empty and contains no live household list.
 
 See `supabase/SETUP.md` to create the first admin and approve resident accounts.
+
