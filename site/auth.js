@@ -14,7 +14,8 @@
    for(const poll of (snapshot?.polls||[])){let {data,error}=await client.rpc('get_poll_tallies',{p_poll_id:poll.id});if(!error&&Array.isArray(data)){poll.remoteCounts=poll.options.map((_,i)=>Number(data.find(x=>Number(x.option_index)===i)?.vote_count||0));poll.remoteChoice=data.find(x=>x.my_choice!==null&&x.my_choice!==undefined)?.my_choice??null}}
    return snapshot;
  }
- window.refreshCommunitySnapshot=async()=>{let {data:snapshot,error}=await client.rpc('get_app_snapshot');if(error)throw error;await addPollTallies(snapshot);window.activateCommunitySession({client,session:window.COMMUNITY_SESSION.session,profile:window.COMMUNITY_SESSION.profile,snapshot});return snapshot};
+ async function addPublicBirthdays(snapshot){let {data,error}=await client.rpc('get_public_birthdays');if(!error&&Array.isArray(data))snapshot.publicBirthdays=data;else snapshot.publicBirthdays=[];return snapshot}
+ window.refreshCommunitySnapshot=async()=>{let {data:snapshot,error}=await client.rpc('get_app_snapshot');if(error)throw error;await addPollTallies(snapshot);await addPublicBirthdays(snapshot);window.activateCommunitySession({client,session:window.COMMUNITY_SESSION.session,profile:window.COMMUNITY_SESSION.profile,snapshot});return snapshot};
  async function activate(session){
    say('');
    let {data:profile,error}=await client.from('profiles').select('user_id,full_name,phone,house_number,requested_house_number,role,approval_status').eq('user_id',session.user.id).single();
@@ -31,6 +32,7 @@
    }
    if(!snapshot){say('AJK belum menyediakan data komuniti. Hubungi admin taman.',true);$('#authSignOut').classList.remove('hidden');return}
    await addPollTallies(snapshot);
+   await addPublicBirthdays(snapshot);
    window.activateCommunitySession({client,session,profile,snapshot});
    document.documentElement.classList.remove('auth-configured');
    $('#logoutButton').classList.remove('hidden');$('#logoutButton').onclick=async e=>{let restore=window.beginAppButtonBusy(e.currentTarget,'Log keluar…');try{await client.auth.signOut();location.reload()}finally{restore?.()}};
