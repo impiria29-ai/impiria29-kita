@@ -176,6 +176,59 @@ begin
 end;
 $$;
 
+
+create or replace function public.get_public_birthdays()
+returns jsonb language plpgsql stable security definer set search_path = public, auth
+as $
+declare v_birthdays jsonb;
+begin
+  if not public.is_approved_member() then raise exception 'Akaun belum diluluskan.'; end if;
+  select coalesce(jsonb_agg(jsonb_build_object('name',b.name,'relationship',b.relationship,'date',right(b.dob,5)) order by right(b.dob,5),b.name),'[]'::jsonb)
+    into v_birthdays
+  from public.community_state s
+  cross join lateral (
+    select h->>'head' as name,'Ketua keluarga'::text as relationship,h->>'headDateOfBirth' as dob
+    from jsonb_array_elements(coalesce(s.data->'households','[]'::jsonb)) h
+    where h->>'headBirthdayPublic'='true'
+    union all
+    select m->>'name',coalesce(nullif(m->>'relationship',''),'Ahli keluarga'),m->>'dateOfBirth'
+    from jsonb_array_elements(coalesce(s.data->'households','[]'::jsonb)) h
+    cross join lateral jsonb_array_elements(coalesce(h->'members','[]'::jsonb)) m
+    where m->>'shareBirthday'='true'
+  ) b
+  where s.state_key='impiria29' and coalesce(b.name,'')<>'' and coalesce(b.dob,'') ~ '^\\d{4}-\\d{2}-\\d{2}
+returns table(option_index integer,vote_count bigint,my_choice integer)
+language sql stable security definer set search_path = public, auth
+as $$
+  select i::int,count(v.house_number)::bigint,
+    (select own.option_index from public.poll_votes own where own.poll_id=p_poll_id and own.house_number=(select house_number from public.profiles where user_id=auth.uid()))
+  from public.community_state s
+  cross join lateral jsonb_array_elements(coalesce(s.data->'polls','[]'::jsonb)) p
+  cross join lateral jsonb_array_elements(p->'options') with ordinality as o(value,i)
+  left join public.poll_votes v on v.poll_id=p_poll_id and v.option_index=i-1
+  where s.state_key='impiria29' and p->>'id'=p_poll_id and public.is_approved_member()
+  group by i order by i;
+$$;
+
+revoke all on public.profiles,public.community_state,public.poll_votes from anon,authenticated;
+revoke all on function public.is_approved_member(),public.is_ajk(),public.is_admin(),public.get_app_snapshot(),public.save_app_snapshot(jsonb),public.cast_household_vote(text,integer),public.submit_resident_notice(jsonb),public.update_my_household(jsonb),public.get_poll_tallies(text),public.get_public_birthdays() from public,anon;
+grant select,update(full_name,phone) on public.profiles to authenticated;
+grant select on public.poll_votes to authenticated;
+grant execute on function public.is_approved_member(),public.is_ajk(),public.is_admin(),public.get_app_snapshot(),public.save_app_snapshot(jsonb),public.cast_household_vote(text,integer),public.submit_resident_notice(jsonb),public.update_my_household(jsonb),public.get_poll_tallies(text),public.get_public_birthdays() to authenticated;
+revoke all on function public.create_pending_profile() from public,anon,authenticated;
+
+create policy "profile self read" on public.profiles for select to authenticated using(user_id=auth.uid() or public.is_admin());
+create policy "profile self contact update" on public.profiles for update to authenticated using(user_id=auth.uid() or public.is_admin()) with check(user_id=auth.uid() or public.is_admin());
+create policy "poll vote row private" on public.poll_votes for select to authenticated using(false);
+
+comment on table public.profiles is 'Akaun perlu diluluskan dan dipautkan kepada rumah oleh admin sebelum akses komuniti.';
+comment on table public.community_state is 'Data komuniti; akses biasa melalui RPC get_app_snapshot dan save_app_snapshot sahaja.';
+comment on table public.poll_votes is 'Satu undi setiap rumah bagi setiap poll; pilihan individu tidak boleh dibaca terus.';
+;
+  return v_birthdays;
+end;
+$;
+
 create or replace function public.get_poll_tallies(p_poll_id text)
 returns table(option_index integer,vote_count bigint,my_choice integer)
 language sql stable security definer set search_path = public, auth
