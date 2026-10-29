@@ -365,3 +365,30 @@ th{font-size:10px}
 body.resident-mode .nav-link[data-page="kewangan"],body.resident-mode .nav-link[data-page="log"],body.ajk-mode .nav-link[data-page="kewangan"],body.ajk-mode .nav-link[data-page="log"]{display:none}body.resident-mode #page-kewangan,body.resident-mode #page-log,body.ajk-mode #page-kewangan,body.ajk-mode #page-log{display:none!important}body.resident-mode [data-edit]:not([data-edit="household"]),body.resident-mode [data-delete],body.resident-mode [data-toggle-age-summary],body.resident-mode [data-edit-resident],body.ajk-mode [data-edit="transaction"],body.ajk-mode [data-delete="transaction"],body.ajk-mode [data-open="transaction"]{display:none!important}body.resident-mode .poll-controls{display:none}body.resident-mode .resident-notice-controls{display:none}
 
 .button-spinner{width:15px;height:15px;flex:0 0 15px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:button-spin .75s linear infinite}button[aria-busy="true"]{cursor:wait;opacity:.82}@keyframes button-spin{to{transform:rotate(360deg)}}
+/* Phone-first house directory: odd homes | street | even homes, stacked vertically */
+@media(max-width:700px){
+ .resident-map-head{display:flex;flex-direction:column;align-items:stretch;gap:12px}
+ .resident-search{display:flex;max-width:none;width:100%;min-width:0;flex:0 0 40px;height:40px;box-sizing:border-box}
+ .resident-search input{min-width:0;font-size:16px}
+ .resident-directory-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+ .resident-directory-actions .button{min-width:0;white-space:normal;line-height:1.25;padding:10px 7px;font-size:10px}
+ .resident-street-world{min-width:0;width:100%}
+ .resident-desktop-layout{display:none}
+ .resident-mobile-layout{display:grid;grid-template-columns:minmax(0,1fr) 30px minmax(0,1fr);gap:7px;align-items:stretch;width:100%}
+ .resident-mobile-column{display:flex;flex-direction:column;gap:6px;min-width:0}
+ .resident-mobile-label{display:flex;align-items:center;justify-content:center;min-height:30px;padding:3px 2px;text-align:center;color:#68796d;font:700 9px Manrope;letter-spacing:.25px}
+ .resident-mobile-column .resident-tile{width:100%;min-width:0;min-height:42px;height:42px;gap:0;padding:2px;border-radius:9px}
+ .resident-mobile-column .resident-tile b{font-size:16px}
+ .resident-mobile-column .resident-tile small{display:none}
+ .resident-mobile-column .resident-star{top:1px;right:3px;font-size:8px}
+ .resident-mobile-layout .mobile-resident-road{height:auto;min-height:1056px;margin-top:30px;overflow:hidden}
+ .mobile-resident-road:before,.mobile-resident-road:after{left:4px;right:4px;width:2px;height:auto;top:0;bottom:0}
+ .mobile-resident-road:before{left:4px}.mobile-resident-road:after{left:auto;right:4px}
+ .mobile-resident-road .road-centerline{left:50%;right:auto;top:8px;bottom:8px;width:2px;height:auto;transform:translateX(-50%);background:repeating-linear-gradient(180deg,#efd888 0 16px,transparent 16px 29px)}
+ .mobile-resident-road>b{position:sticky;top:70px;display:block;writing-mode:vertical-rl;transform:rotate(180deg);max-height:210px;margin:12px auto;padding:9px 5px;font-size:9px;letter-spacing:.8px;text-align:center}
+ .resident-hint:after{content:""}
+}
+.resident-desktop-layout{display:block}
+.resident-mobile-layout{display:none}
+.help-email{color:#6e4c8c!important;font-weight:700}
+@media(max-width:700px){.resident-desktop-layout{display:none}.resident-mobile-layout{display:grid}}
