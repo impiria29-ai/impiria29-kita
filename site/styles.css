@@ -414,3 +414,17 @@ body.resident-mode .nav-link[data-page="kewangan"],body.resident-mode .nav-link[
 .family-tree-member-grid .family-tree-person:before{content:"";position:absolute;width:2px;height:18px;left:50%;top:-19px;background:#c7d8ca}
 .family-tree-empty-note{text-align:center;color:#839087;font-size:12px;margin:20px 0 4px}
 @media(max-width:700px){.family-tree-view{padding:18px 13px}.family-tree-member-grid{grid-template-columns:1fr;gap:12px}.family-tree-member-grid:before{left:50%;right:auto;top:0;height:18px;width:2px}.family-tree-member-grid{padding-top:20px}.family-tree-member-grid .family-tree-person:before{height:12px;top:-13px}.family-tree-person{min-width:0;width:100%;padding:12px}.family-tree-root-wrap{padding-bottom:0}}
+
+.family-member-editor{display:grid;gap:10px;margin:10px 0}
+.family-member-row{display:grid;grid-template-columns:minmax(150px,1.25fr) minmax(140px,1fr) minmax(150px,1fr) auto;gap:9px;align-items:end;padding:12px;border:1px solid #e7ede8;border-radius:12px;background:#fbfcfb}
+.family-member-row label{display:grid;gap:6px;color:#68766d;font-size:10px;font-weight:700}
+.family-member-row input,.family-member-row select{width:100%;min-width:0;height:39px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);font:inherit;font-size:12px}
+.family-member-remove{height:38px;white-space:nowrap}
+.add-family-member{margin-top:8px}
+.birthday-banner{display:flex;align-items:center;gap:15px;margin:0 0 18px;padding:16px 18px;border:1px solid #f1dfb0;border-radius:15px;background:linear-gradient(120deg,#fff9e9,#fff);box-shadow:0 8px 22px rgba(120,90,20,.08)}
+.birthday-banner-icon{display:grid;place-items:center;flex:0 0 44px;height:44px;border-radius:14px;background:#fff0c9;font-size:23px}
+.birthday-banner>div{display:grid;gap:4px}
+.birthday-banner small{color:#9b7737;font-size:9px;font-weight:800;letter-spacing:.9px}
+.birthday-banner b{color:#4e4632;font:700 15px Manrope}
+.birthday-banner p{margin:0;color:#8d846f;font-size:11px}
+@media(max-width:700px){.family-member-row{grid-template-columns:1fr 1fr;gap:8px;padding:10px}.family-member-row label:first-child{grid-column:1/-1}.family-member-remove{grid-column:1/-1;justify-self:end}.birthday-banner{align-items:flex-start;padding:14px}.birthday-banner-icon{flex-basis:38px;height:38px}}
