@@ -6,6 +6,9 @@
  const signupHouse=$('#authSignupForm [name="house_number"]');
  for(let n=1;n<=43;n++){let option=document.createElement('option');option.value=String(n);option.textContent=`Rumah ${String(n).padStart(2,'0')}`;signupHouse.append(option)}
  function say(text,error=false){message.textContent=text;message.classList.toggle('error',error)}
+ function appRedirectUrl(){return new URL('./',window.location.href).toString()}
+ const callbackErrorParams=new URLSearchParams(window.location.hash.replace(/^#/,'')||'');
+ if(callbackErrorParams.get('error_code')==='otp_expired'||callbackErrorParams.get('error')==='access_denied')say('Pautan pengesahan telah luput atau tidak sah. Masukkan e-mel anda dan tekan “Hantar semula” untuk menerima pautan baharu.',true)
  function switchForm(which){$('#authLoginForm').classList.toggle('hidden',which!=='login');$('#authSignupForm').classList.toggle('hidden',which!=='signup');say('')}
  async function addPollTallies(snapshot){
    for(const poll of (snapshot?.polls||[])){let {data,error}=await client.rpc('get_poll_tallies',{p_poll_id:poll.id});if(!error&&Array.isArray(data)){poll.remoteCounts=poll.options.map((_,i)=>Number(data.find(x=>Number(x.option_index)===i)?.vote_count||0));poll.remoteChoice=data.find(x=>x.my_choice!==null&&x.my_choice!==undefined)?.my_choice??null}}
@@ -49,7 +52,7 @@
    say('Menghantar permohonan…');
    let completed=false;
    try{
-     let {data,error}=await client.auth.signUp({email:String(f.get('email')).trim(),password:String(f.get('password')),options:{data:{full_name:String(f.get('full_name')).trim(),phone,house_number:String(f.get('house_number'))}}});
+     let {data,error}=await client.auth.signUp({email:String(f.get('email')).trim(),password:String(f.get('password')),options:{data:{full_name:String(f.get('full_name')).trim(),phone,house_number:String(f.get('house_number'))},emailRedirectTo:appRedirectUrl()}});
      if(error){say(error.message,true);return}
      completed=true;
      if(data.session) await activate(data.session); else say('Permohonan diterima. Semak e-mel untuk pengesahan, kemudian tunggu kelulusan AJK.');
@@ -57,6 +60,24 @@
    finally{
      signupPending=false;button.removeAttribute('aria-busy');
      if(completed){button.textContent='Permohonan dihantar'}else{button.disabled=false;button.textContent=idleLabel}
+   }
+ });
+ let confirmationPending=false;
+ $('#resendConfirmationButton').addEventListener('click',async e=>{
+   if(confirmationPending)return;
+   let button=e.currentTarget,email=String($('#authLoginForm [name="email"]').value||'').trim();
+   if(!email){say('Masukkan e-mel anda di ruangan Log masuk dahulu.',true);return}
+   let idleLabel=button.dataset.idleLabel||button.textContent;button.dataset.idleLabel=idleLabel;
+   confirmationPending=true;button.disabled=true;button.setAttribute('aria-busy','true');button.textContent='Menghantar pautan…';say('Menghantar pautan pengesahan…');
+   let completed=false;
+   try{
+     let {error}=await client.auth.resend({type:'signup',email,options:{emailRedirectTo:appRedirectUrl()}});
+     if(error){say(error.message,true);return}
+     completed=true;say('Pautan pengesahan baharu dihantar. Semak e-mel dan folder spam.');
+   }catch(error){say(error?.message||'Pautan tidak dapat dihantar. Cuba lagi sebentar nanti.',true)}
+   finally{
+     confirmationPending=false;button.removeAttribute('aria-busy');
+     if(completed){button.textContent='Pautan pengesahan dihantar'}else{button.disabled=false;button.textContent=idleLabel}
    }
  });
  document.addEventListener('click',e=>{let b=e.target.closest('[data-auth-switch]');if(b)switchForm(b.dataset.authSwitch)});
