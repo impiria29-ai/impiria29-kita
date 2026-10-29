@@ -363,3 +363,5 @@ th{font-size:10px}
 
 /* Kawalan berasaskan peranan, dikuatkuasakan juga oleh RLS database */
 body.resident-mode .nav-link[data-page="kewangan"],body.resident-mode .nav-link[data-page="log"],body.ajk-mode .nav-link[data-page="kewangan"],body.ajk-mode .nav-link[data-page="log"]{display:none}body.resident-mode #page-kewangan,body.resident-mode #page-log,body.ajk-mode #page-kewangan,body.ajk-mode #page-log{display:none!important}body.resident-mode [data-edit]:not([data-edit="household"]),body.resident-mode [data-delete],body.resident-mode [data-toggle-age-summary],body.resident-mode [data-edit-resident],body.ajk-mode [data-edit="transaction"],body.ajk-mode [data-delete="transaction"],body.ajk-mode [data-open="transaction"]{display:none!important}body.resident-mode .poll-controls{display:none}body.resident-mode .resident-notice-controls{display:none}
+
+.button-spinner{width:15px;height:15px;flex:0 0 15px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:button-spin .75s linear infinite}button[aria-busy="true"]{cursor:wait;opacity:.82}@keyframes button-spin{to{transform:rotate(360deg)}}
