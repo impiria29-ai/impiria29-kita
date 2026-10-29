@@ -338,6 +338,7 @@ th{font-size:10px}
 @media(max-width:700px){.audit-count-card{min-width:75px;padding:10px}.audit-toolbar{grid-template-columns:1fr}.audit-log-card{gap:10px;padding:12px}.audit-log-top time{width:100%;margin:0}.audit-log-main h3{font-size:13px}}
 
 .install-app-button{padding:8px 11px;white-space:nowrap;background:#f2edf8;color:#48256f;border:1px solid #e6dcf0;font-size:10px}.pwa-help-dialog form{padding:22px}.pwa-install-steps{padding:7px 0 15px}.pwa-install-steps p{font-size:12px;line-height:1.6;color:#718078}.pwa-install-steps p b{color:#35483f}.pwa-install-steps .demo-note{font-size:10px}
+.pwa-install-intro{display:flex;align-items:center;gap:13px;padding:18px 0 8px}.pwa-install-intro img{width:52px;height:52px;border-radius:15px;box-shadow:0 5px 15px #33214a18}.pwa-install-intro div{display:grid;gap:4px}.pwa-install-intro b{font:700 14px Manrope;color:#33214a}.pwa-install-intro span{font-size:11px;line-height:1.5;color:#718078}.pwa-help-dialog .modal-actions{justify-content:space-between}.pwa-help-dialog .modal-actions .button{min-height:42px}.pwa-help-dialog .modal-actions .button-primary{min-width:145px}@media(max-width:480px){.pwa-help-dialog form{padding:19px}.pwa-install-intro{padding-top:15px}.pwa-help-dialog .modal-actions .button-primary{min-width:135px}}
 @media(max-width:700px){.install-app-button{padding:8px 9px;font-size:10px}.top-actions{gap:8px}}
 
 /* Navigasi boleh dibuka dan ditutup pada desktop serta telefon */
