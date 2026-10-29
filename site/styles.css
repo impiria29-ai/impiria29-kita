@@ -392,3 +392,25 @@ body.resident-mode .nav-link[data-page="kewangan"],body.resident-mode .nav-link[
 .resident-mobile-layout{display:none}
 .help-email{color:#6e4c8c!important;font-weight:700}
 @media(max-width:700px){.resident-desktop-layout{display:none}.resident-mobile-layout{display:grid}}
+
+.family-tree-list{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+.family-tree-view{padding:24px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(140deg,rgba(255,255,255,.92),rgba(245,249,245,.86));box-shadow:var(--shadow);max-width:900px;margin:0 auto}
+.family-tree-intro{text-align:center;margin:0 auto 22px;max-width:560px}
+.family-tree-intro h2{margin:6px 0;font:700 22px Manrope;color:var(--ink)}
+.family-tree-intro p{margin:0;color:#7d8981;font-size:12px;line-height:1.6}
+.family-tree-root-wrap{display:flex;justify-content:center;position:relative}
+.family-tree-person{display:flex;align-items:center;gap:12px;min-width:min(100%,235px);max-width:280px;padding:14px 16px;border:1px solid #e6ece7;border-radius:14px;background:#fff;box-shadow:0 8px 20px rgba(34,61,43,.07)}
+.family-tree-root{border-color:#bdd6c2;background:linear-gradient(145deg,#f4faf5,#fff)}
+.family-tree-avatar{display:grid;place-items:center;flex:0 0 42px;height:42px;border-radius:13px;background:#e8f3e9;color:#31764c;font-size:20px}
+.family-tree-person>div{display:grid;gap:4px;min-width:0}
+.family-tree-person small{font-size:9px;font-weight:800;letter-spacing:.8px;color:#819187}
+.family-tree-person b{font:700 13px Manrope;overflow-wrap:anywhere}
+.family-tree-person span:last-child{font-size:10px;color:#8a968e}
+.family-tree-branches{position:relative;padding-top:31px}
+.family-tree-branch-line{position:absolute;top:0;left:50%;height:22px;width:2px;background:#c7d8ca}
+.family-tree-member-grid{position:relative;display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));justify-items:center;gap:16px;padding-top:18px}
+.family-tree-member-grid:before{position:absolute;content:"";height:2px;top:0;left:calc(50% - min(42%, 340px));right:calc(50% - min(42%, 340px));background:#c7d8ca}
+.family-tree-member-grid .family-tree-person{position:relative;width:100%}
+.family-tree-member-grid .family-tree-person:before{content:"";position:absolute;width:2px;height:18px;left:50%;top:-19px;background:#c7d8ca}
+.family-tree-empty-note{text-align:center;color:#839087;font-size:12px;margin:20px 0 4px}
+@media(max-width:700px){.family-tree-view{padding:18px 13px}.family-tree-member-grid{grid-template-columns:1fr;gap:12px}.family-tree-member-grid:before{left:50%;right:auto;top:0;height:18px;width:2px}.family-tree-member-grid{padding-top:20px}.family-tree-member-grid .family-tree-person:before{height:12px;top:-13px}.family-tree-person{min-width:0;width:100%;padding:12px}.family-tree-root-wrap{padding-bottom:0}}
