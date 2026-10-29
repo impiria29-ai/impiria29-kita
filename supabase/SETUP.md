@@ -9,7 +9,7 @@ Frontend login menggunakan Supabase Auth dan publishable key. Tiada secret key a
 3. Buka fail `schema.sql` dalam folder `supabase`, salin semua kandungan dan tampal ke editor.
 4. Tekan **Run** sekali. Pastikan Supabase menunjukkan `Success`; jika ada ralat, jangan teruskan ke pendaftaran penduduk dahulu.
 
-Skema menyediakan profil akaun, kelulusan penduduk, snapshot data komuniti, hebahan dan undi satu bagi setiap rumah. Penduduk hanya menerima data yang dibenarkan untuk rumah masing-masing; AJK tidak boleh membaca kewangan/log melalui API; admin boleh mengurus semua rekod. Pilihan individu dalam undian tidak boleh dibaca terus.
+Skema menyediakan profil akaun, kelulusan penduduk, snapshot data komuniti, hebahan dan undi satu bagi setiap rumah. Penduduk hanya menerima data yang dibenarkan untuk rumah masing-masing; AJK tidak boleh membaca kewangan/log melalui API; admin boleh mengurus semua rekod. Pilihan individu dalam undian tidak boleh dibaca terus. Tarikh lahir keluarga kekal sulit kecuali ahli keluarga memilih untuk berkongsi ucapan; paparan umum hanya memberi nama serta hari/bulan.
 
 ## 2. Tetapan log masuk
 
@@ -41,3 +41,8 @@ Penduduk daftar dalam app; mereka belum dapat melihat data sehingga diluluskan. 
 ## Perlindungan kunci
 
 `supabase-config.js` mengandungi URL projek dan publishable key untuk frontend. Publishable key memang direka untuk berada di browser; akses sebenar dikawal oleh RLS dan fungsi database dalam skema ini. Jangan letakkan `sb_secret_`, service-role key, kata laluan dashboard atau kata laluan database dalam app atau repo.
+
+
+## 5. Aktifkan ucapan hari lahir penduduk
+
+Untuk database yang sudah digunakan, buka **SQL Editor → New query**, salin kandungan fail `supabase/migrations/20261030_public_birthdays.sql`, kemudian tekan **Run**. Ini mengaktifkan senarai ucapan yang dipersetujui tanpa memaparkan tahun lahir. Jika binaan database baharu, fungsi ini sudah termasuk dalam `schema.sql`.
