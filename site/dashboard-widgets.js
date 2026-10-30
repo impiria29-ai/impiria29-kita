@@ -261,17 +261,19 @@
     const date = new Date(`${select.value}-01T12:00:00+08:00`);
     $('#prayerMonthHeading').textContent = `Waktu solat · ${date.toLocaleDateString('ms-MY', { month: 'long', year: 'numeric', timeZone: 'Asia/Kuala_Lumpur' })}`;
     $('#prayerMonthZone').textContent = `Zon JAKIM ${prayerZone}`;
-    $('#prayerMonthHijriDate').textContent = `Tarikh Hijrah hari ini · ${hijriDateLabel()}`;
+    $('#prayerMonthHijriDate').textContent = `Tarikh Hijrah hari ini · ${await hijriDateLabel()}`;
     list.innerHTML = '<div class="empty-state">Memuatkan jadual sebulan…</div>';
     try {
       const table = await loadPrayerYear(prayerZone, year), fields = table.fields, getIndex = name => fields.indexOf(name);
       const dateIndex = getIndex('date'), monthRows = table.days.filter(row => String(row[dateIndex] || '').slice(0, 7) === `${yearText}-${month}`);
       if (!monthRows.length) throw new Error('Jadual bagi bulan ini belum tersedia.');
       const names = [['fajr', 'Subuh'], ['dhuhr', 'Zohor'], ['asr', 'Asar'], ['maghrib', 'Maghrib'], ['isha', 'Isyak']];
-      list.innerHTML = monthRows.map(row => {
-        const day = String(row[dateIndex]).slice(0, 10), label = new Date(`${day}T12:00:00+08:00`).toLocaleDateString('ms-MY', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kuala_Lumpur' });
-        return `<article class="prayer-month-day"><div class="prayer-calendar-date"><b>${label}</b><small>${hijriDateLabel(new Date(`${day}T12:00:00+08:00`))}</small></div><div>${names.map(([field, name]) => `<span>${name}<strong>${displayTime(row[getIndex(field)])}</strong></span>`).join('')}</div></article>`;
-      }).join('');
+      list.innerHTML = (await Promise.all(monthRows.map(async row => {
+        const day = String(row[dateIndex]).slice(0, 10), date = new Date(`${day}T12:00:00+08:00`);
+        const label = date.toLocaleDateString('ms-MY', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kuala_Lumpur' });
+        const hijri = formatJAKIMHijri(row[getIndex('hijri')]) || await hijriDateLabel(date);
+        return `<article class="prayer-month-day"><div class="prayer-calendar-date"><b>${label}</b><small>${hijri}</small></div><div>${names.map(([field, name]) => `<span>${name}<strong>${displayTime(row[getIndex(field)])}</strong></span>`).join('')}</div></article>`;
+      }))).join('');
     } catch (error) {
       console.warn('Jadual waktu solat bulanan gagal dimuatkan:', error);
       list.innerHTML = '<div class="empty-state">Jadual bulanan tidak dapat dimuatkan. Cuba lagi kemudian atau rujuk laman e-Solat JAKIM.</div>';
@@ -333,7 +335,7 @@
     loadPrayerTimes();
     window.loadPrayerMonth?.();
   });
-  if ($('#prayerHijriDate')) $('#prayerHijriDate').textContent = `Tarikh Hijrah · ${hijriDateLabel()}`;
+  if ($('#prayerHijriDate')) hijriDateLabel().then(label => { $('#prayerHijriDate').textContent = `Tarikh Hijrah · ${label}`; });
   initPrayerMonthOptions();
   loadWeather();
   loadAirIndex();
