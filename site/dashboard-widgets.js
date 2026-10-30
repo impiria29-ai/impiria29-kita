@@ -134,7 +134,7 @@
   async function loadRiverReadings() {
     const list = $('#riverStationSummary'), updated = $('#riverDataUpdated');
     if (!list || !updated) return;
-    const requested = new Map([['3015435', 'Batu Tiga'], ['3015490', 'T.T.D.I Jaya, Shah Alam'], ['3115404', 'Kampung Melayu Subang']]);
+    const requested = new Map([['0232961WL', 'SG. KLANG DI KG. LOMBONG']]);
     try {
       const response = await fetch('https://publicinfobanjir.water.gov.my/waterleveldata/Selangor', { cache: 'no-store' });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -154,7 +154,8 @@
       updated.textContent = 'Bacaan diambil daripada Public InfoBanjir JPS · semak masa kemas kini pada setiap stesen.';
     } catch (error) {
       console.info('Bacaan sungai JPS dibuka terus melalui pautan rasmi.', error);
-      updated.textContent = 'Paparan bacaan automatik tidak tersedia pada browser ini. Tekan “Bacaan langsung JPS” untuk data semasa.';
+      list.innerHTML = '<article class="river-station-card"><span class="river-station-mark">〰</span><div><b>SG. KLANG DI KG. LOMBONG</b><small>Sungai Klang · Klang</small></div><a href="https://infobanjirjps.selangor.gov.my/water-level-graph.html?station=872" target="_blank" rel="noopener">Lihat bacaan JPS ↗</a></article>';
+      updated.textContent = 'Bacaan langsung tidak dapat dimuatkan dalam app. Buka graf rasmi JPS untuk bacaan semasa.';
     }
   }
 
