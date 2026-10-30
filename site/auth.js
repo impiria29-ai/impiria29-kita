@@ -9,7 +9,7 @@
  const callbackErrorParams=new URLSearchParams(window.location.hash.replace(/^#/,'')||'');
  if(callbackErrorParams.get('error_code')==='otp_expired'||callbackErrorParams.get('error')==='access_denied')say('Pautan lama tidak sah. Anda boleh log masuk selepas akaun diluluskan oleh AJK atau admin.',true)
  function switchForm(which){$('#authLoginForm').classList.toggle('hidden',which!=='login');$('#authSignupForm').classList.toggle('hidden',which!=='signup');$('#authRequestSuccess').classList.add('hidden');$('#authTitle').textContent='Impiria29 Kita';$('#authIntro').textContent='Log masuk untuk melihat ruang komuniti penduduk.';message.classList.remove('hidden');say('');history.replaceState(null,'',location.pathname+location.search)}
- function showRequestSubmitted(emailConfirmationStillOn){$('#authLoginForm').classList.add('hidden');$('#authSignupForm').classList.add('hidden');$('#authRequestSuccess').classList.remove('hidden');message.classList.add('hidden');$('#authSignOut').classList.add('hidden');$('#authTitle').textContent='Permohonan dihantar';$('#authIntro').textContent='Terima kasih kerana mendaftar akses penduduk.';$('#requestSuccessCopy').textContent=emailConfirmationStillOn?'Permohonan direkodkan, tetapi tetapan Supabase masih meminta pengesahan e-mel. Admin perlu mematikan Confirm email supaya pengguna tidak menerima e-mel dan boleh log masuk selepas kelulusan.':'AJK atau admin akan menyemak permohonan anda. Tiada e-mel pengesahan dihantar. Anda boleh log masuk selepas akaun diluluskan.';history.replaceState(null,'',location.pathname+location.search+'#permohonan-dihantar')}
+ function showRequestSubmitted(emailConfirmationStillOn){$('#authLoginForm').classList.add('hidden');$('#authSignupForm').classList.add('hidden');$('#authRequestSuccess').classList.remove('hidden');message.classList.add('hidden');$('#authSignOut').classList.add('hidden');$('#authTitle').textContent='Permohonan dihantar';$('#authIntro').textContent='Terima kasih kerana mendaftar akses penduduk.';$('#requestSuccessCopy').textContent=emailConfirmationStillOn?'Permohonan anda telah direkodkan. Namun, tetapan Supabase masih mewajibkan pengesahan e-mel. Admin perlu mematikan Confirm email di tetapan Authentication supaya akaun boleh log masuk selepas AJK meluluskannya.':'Permohonan anda telah direkodkan. Tiada tindakan melalui e-mel diperlukan. AJK atau admin akan menyemak permohonan dan memautkan nombor rumah; anda boleh log masuk selepas diluluskan.';history.replaceState(null,'',location.pathname+location.search+'#permohonan-dihantar')}
  async function addPollTallies(snapshot){
    for(const poll of (snapshot?.polls||[])){let {data,error}=await client.rpc('get_poll_tallies',{p_poll_id:poll.id});if(!error&&Array.isArray(data)){poll.remoteCounts=poll.options.map((_,i)=>Number(data.find(x=>Number(x.option_index)===i)?.vote_count||0));poll.remoteChoice=data.find(x=>x.my_choice!==null&&x.my_choice!==undefined)?.my_choice??null}}
    return snapshot;
@@ -42,7 +42,7 @@
  }
  $('#authLoginForm').addEventListener('submit',async e=>{
    e.preventDefault();const form=e.currentTarget,button=form.querySelector('[type="submit"]'),restore=window.beginAppButtonBusy(button,'Sedang log masuk…');if(!restore)return;
-   try{let f=new FormData(form),{data,error}=await client.auth.signInWithPassword({email:String(f.get('email')).trim(),password:String(f.get('password'))});if(error){say('E-mel atau kata laluan tidak betul, atau pengesahan e-mel belum selesai.',true);return}await activate(data.session)}
+   try{let f=new FormData(form),{data,error}=await client.auth.signInWithPassword({email:String(f.get('email')).trim(),password:String(f.get('password'))});if(error){say(error.code==='email_not_confirmed'?'Log masuk disekat kerana Supabase masih mewajibkan pengesahan e-mel. Admin perlu mematikan Confirm email dalam tetapan Authentication.': 'E-mel atau kata laluan tidak betul. Jika akaun baru diluluskan, cuba log masuk semula atau hubungi admin taman.',true);return}await activate(data.session)}
    catch(error){say(error?.message||'Tidak dapat log masuk. Cuba lagi sebentar nanti.',true)}
    finally{restore()}
  });
@@ -56,9 +56,9 @@
    try{
      let {data,error}=await client.auth.signUp({email:String(f.get('email')).trim(),password:String(f.get('password')),options:{data:{full_name:String(f.get('full_name')).trim(),phone,house_number:String(f.get('house_number'))}}});
      if(error){say(error.message,true);return}
-     if(data.user?.identities?.length===0){say('E-mel ini mungkin sudah mempunyai akaun. Cuba log masuk atau hubungi admin taman.',true);return}
-     if(data.session){let {error:signOutError}=await client.auth.signOut();if(signOutError)console.warn('Sesi permohonan kekal aktif; akses masih dikawal oleh status kelulusan.')}
+     if(data.user?.identities?.length===0){let email=String(f.get('email')).trim();form.reset();switchForm('login');$('#authLoginForm [name="email"]').value=email;say('E-mel ini sudah mempunyai akaun. Cuba log masuk. Jika masih tidak boleh, minta admin semak status akaun dan tetapan Confirm email.',true);return}
      form.reset();
+     if(data.session){try{let {error:signOutError}=await client.auth.signOut();if(signOutError)console.warn('Sesi permohonan kekal aktif; akses masih dikawal oleh status kelulusan.')}catch(signOutError){console.warn('Sesi permohonan kekal aktif; akses masih dikawal oleh status kelulusan.',signOutError)}}
      showRequestSubmitted(!data.session);
    }catch(error){say(error?.message||'Permohonan tidak dapat dihantar. Cuba lagi sebentar nanti.',true)}
    finally{signupPending=false;restore()}
