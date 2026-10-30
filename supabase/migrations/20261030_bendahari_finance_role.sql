@@ -84,7 +84,7 @@ begin
 
   -- Bendahari boleh mengubah senarai transaksi sahaja. Semua data lain kekal.
   if public.is_finance_manager() and not public.is_admin() and not public.is_ajk() then
-    if jsonb_typeof(p_data->'transactions') <> 'array' then
+    if coalesce(jsonb_typeof(p_data->'transactions'),'null') <> 'array' then
       raise exception 'Senarai transaksi tidak sah.';
     end if;
     update public.community_state
