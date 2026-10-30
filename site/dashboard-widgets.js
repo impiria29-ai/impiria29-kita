@@ -3,6 +3,7 @@
   const weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=2.9788811&longitude=101.5361309&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,sunrise,sunset&forecast_days=16&timezone=Asia%2FKuala_Lumpur';
   const apimsUrl = 'https://eqms.doe.gov.my/api3/publicportalapims/mapcaqm';
   const apimsLayerUrl = 'https://eqms.doe.gov.my/api3/publicmapproxy/PUBLIC_DISPLAY/CAQM_MCAQM_Current_Reading/MapServer/0/query?where=1%3D1&outFields=*&returnGeometry=false&f=json';
+  const ipuSnapshotUrl = new URL('ipu.json', document.baseURI).href;
   const hazeMonitorUrl = 'https://hazemonitor.com/api/air-quality';
   const taman = { latitude: 2.9788811, longitude: 101.5361309 };
   let prayerZone = 'SGR01';
@@ -99,6 +100,7 @@
   async function loadAirIndex() {
     const output = $('#currentIpu'), stationOutput = $('#ipuStation');
     const sources = [
+      { name: 'Snapshot JAS', url: `${ipuSnapshotUrl}?t=${Date.now()}` },
       { name: 'APIMS JAS', url: apimsUrl },
       { name: 'APIMS JAS', url: apimsLayerUrl },
       { name: 'Haze Monitor · data JAS', url: hazeMonitorUrl }
@@ -107,13 +109,13 @@
       try {
         const payload = await requestJson(source.url, 9000);
         const rows = toRows(payload);
-        const target = rows.find(row => {
+        const target = source.name === 'Snapshot JAS' ? payload : rows.find(row => {
           const code = getField(row, ['STATION_ID', 'STATIONID', 'STATION_CODE', 'STATIONCODE', 'SITE_ID', 'SITEID', 'SITE_CODE', 'SITECODE', 'STATION_NO', 'STN', 'MCAQM_ID', 'CAQM_ID', 'CODE', 'ID']);
           const name = getField(row, ['STATION_LOCATION', 'LOCATION', 'STATION_NAME', 'STATION', 'NAME', 'STATIONNAME', 'PLACE', 'LOCATION_NAME', 'FULLNAME']);
           return String(code || '').trim().toUpperCase() === 'MCAQM001' || /JOHAN\s+SETIA/i.test(String(name || ''));
         });
         if (!target) throw new Error('Stesen MCAQM001 tiada dalam respons sumber.');
-        const value = source.name.startsWith('Haze') ? number(getField(target, ['api'])) : airIndex(target);
+        const value = source.name === 'Snapshot JAS' || source.name.startsWith('Haze') ? number(getField(target, ['api'])) : airIndex(target);
         if (value === null) throw new Error('Bacaan IPU MCAQM001 tiada.');
         const [status, className] = airStatus(value);
         output.innerHTML = `<span class="ipu-value ${className}">${value}</span> <span class="ipu-status">${status}</span>`;
@@ -123,7 +125,8 @@
           const date = new Date(observedAt);
           observedLabel = Number.isNaN(date.valueOf()) ? String(observedAt) : date.toLocaleString('ms-MY', { timeZone: 'Asia/Kuala_Lumpur', dateStyle: 'short', timeStyle: 'short' });
         }
-        stationOutput.textContent = `Johan Setia · MCAQM001${observedLabel ? ` · ${observedLabel}` : ''} · ${source.name}`;
+        const isStale = observedAt && Date.now() - new Date(observedAt).getTime() > 2 * 60 * 60 * 1000;
+        stationOutput.textContent = `Johan Setia · MCAQM001${observedLabel ? ` · ${observedLabel}` : ''}${isStale ? ' · bacaan lama' : ''} · ${source.name}`;
         return;
       } catch (error) {
         console.info(`Sumber IPU ${source.name} tidak tersedia; cuba sumber seterusnya.`, error);
