@@ -42,7 +42,7 @@
  }
  $('#authLoginForm').addEventListener('submit',async e=>{
    e.preventDefault();const form=e.currentTarget,button=form.querySelector('[type="submit"]'),restore=window.beginAppButtonBusy(button,'Sedang log masuk…');if(!restore)return;
-   try{let f=new FormData(form),{data,error}=await client.auth.signInWithPassword({email:String(f.get('email')).trim(),password:String(f.get('password'))});if(error){say(error.code==='email_not_confirmed'?'Log masuk disekat kerana Supabase masih mewajibkan pengesahan e-mel. Admin perlu mematikan Confirm email dalam tetapan Authentication.': 'E-mel atau kata laluan tidak betul. Jika akaun baru diluluskan, cuba log masuk semula atau hubungi admin taman.',true);return}await activate(data.session)}
+   try{let f=new FormData(form),{data,error}=await client.auth.signInWithPassword({email:String(f.get('email')).trim(),password:String(f.get('password'))});if(error){say(error.code==='email_not_confirmed'?'Rekod e-mel akaun ini masih belum disahkan oleh Supabase. Admin perlu semak Authentication → Users dan sahkan rekod akaun ini. Selepas itu, AJK/admin masih perlu meluluskan permohonan serta memautkan nombor rumah.': 'E-mel atau kata laluan tidak betul. Jika akaun baru diluluskan, cuba log masuk semula atau hubungi admin taman.',true);return}await activate(data.session)}
    catch(error){say(error?.message||'Tidak dapat log masuk. Cuba lagi sebentar nanti.',true)}
    finally{restore()}
  });
