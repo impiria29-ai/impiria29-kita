@@ -44,7 +44,8 @@
     return '';
   }
   async function hijriDateLabel(date = new Date()) {
-    const iso = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kuala_Lumpur', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
+    const dateParts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kuala_Lumpur', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date).map(part => [part.type, part.value]));
+    const iso = `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
     try {
       const table = await loadPrayerYear(prayerZone, Number(iso.slice(0, 4))), dateIndex = table.fields.indexOf('date'), hijriIndex = table.fields.indexOf('hijri');
       const row = table.days.find(item => String(item[dateIndex] || '').slice(0, 10) === iso);
