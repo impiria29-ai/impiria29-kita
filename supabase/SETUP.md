@@ -9,7 +9,7 @@ Frontend login menggunakan Supabase Auth dan publishable key. Tiada secret key a
 3. Buka fail `schema.sql` dalam folder `supabase`, salin semua kandungan dan tampal ke editor.
 4. Tekan **Run** sekali. Pastikan Supabase menunjukkan `Success`; jika ada ralat, jangan teruskan ke pendaftaran penduduk dahulu.
 
-Skema menyediakan profil akaun, kelulusan penduduk, snapshot data komuniti, hebahan dan undi satu bagi setiap rumah. Penduduk hanya menerima data yang dibenarkan untuk rumah masing-masing; AJK tidak boleh membaca kewangan/log melalui API; admin boleh mengurus semua rekod. Pilihan individu dalam undian tidak boleh dibaca terus. Tarikh lahir keluarga kekal sulit kecuali ahli keluarga memilih untuk berkongsi ucapan; paparan umum hanya memberi nama serta hari/bulan.
+Skema menyediakan profil akaun, kelulusan penduduk, snapshot data komuniti, hebahan dan undi satu bagi setiap rumah. Penduduk hanya menerima data yang dibenarkan untuk rumah masing-masing; AJK boleh melihat baki keseluruhan tanpa membaca transaksi; Bendahari boleh mengurus kewangan tetapi bukan Tetapan; admin ialah superuser. Pilihan individu dalam undian tidak boleh dibaca terus. Tarikh lahir keluarga kekal sulit kecuali ahli keluarga memilih untuk berkongsi ucapan; paparan umum hanya memberi nama serta hari/bulan.
 
 ## 2. Tetapan log masuk
 
@@ -72,3 +72,8 @@ Untuk database sedia ada, jalankan `supabase/migrations/20261030_dashboard_publi
 Untuk database sedia ada, jalankan `supabase/migrations/20261030_per_user_event_attendance.sql` di **SQL Editor → New query**. Migration ini menyimpan kehadiran per akaun, mengira jumlah yang hadir, dan tidak mendedahkan senarai nama peserta.
 
 Migration kehadiran ini juga mengaktifkan halaman Tetapan Sistem (zon SGR01/SGR03) yang boleh diubah oleh admin. Selepas SQL berjaya, fungsi kehadiran acara dan tetapan tersedia untuk semua akaun yang dibenarkan.
+
+
+## 4. Aktifkan peranan Bendahari pada projek sedia ada
+
+Selepas aplikasi diterbitkan, buka **SQL Editor → New query** di Supabase. Salin dan jalankan kandungan `migrations/20261030_bendahari_finance_role.sql`. Selepas Supabase memaparkan `Success`, admin boleh membuka **Senarai pengguna**, menukar peranan akaun yang diluluskan kepada **Bendahari**, kemudian tekan **Simpan perubahan**. Bendahari boleh mengurus transaksi kewangan tetapi tidak boleh membuka Tetapan, log perubahan atau senarai akaun. Jangan jalankan migration ini sebelum projek menggunakan skema komuniti.
