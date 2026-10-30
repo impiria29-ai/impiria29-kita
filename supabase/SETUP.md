@@ -65,3 +65,8 @@ Untuk database sedia ada, jalankan kandungan `supabase/migrations/20261030_accou
 ## 8. Baki tabung pada Ringkasan penduduk
 
 Untuk database sedia ada, jalankan `supabase/migrations/20261030_dashboard_public_summary.sql` di **SQL Editor → New query**. Fungsi ini hanya memberikan jumlah baki kepada ahli yang diluluskan; ia tidak memberikan senarai transaksi kepada penduduk. Selepas migration berjaya, log keluar dan masuk semula.
+
+
+## 10. Kehadiran acara bagi setiap akaun
+
+Untuk database sedia ada, jalankan `supabase/migrations/20261030_per_user_event_attendance.sql` di **SQL Editor → New query**. Migration ini menyimpan kehadiran per akaun, mengira jumlah yang hadir, dan tidak mendedahkan senarai nama peserta.
