@@ -240,33 +240,127 @@
     const value = name => { const index = fields.indexOf(name); return index >= 0 ? today[index] : ''; };
     return { fajr: value('fajr'), dhuhr: value('dhuhr'), asr: value('asr'), maghrib: value('maghrib'), isha: value('isha') };
   }
-  function initPrayerMonthOptions() {
-    const select = $('#prayerMonthSelect');
-    if (!select || select.dataset.ready) return;
-    const [year, month] = malaysiaDate().split('-').map(Number), current = new Date(year, month - 1, 1);
-    for (let offset = -2; offset <= 10; offset++) {
-      const date = new Date(current.getFullYear(), current.getMonth() + offset, 1), value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      const label = date.toLocaleDateString('ms-MY', { month: 'long', year: 'numeric', timeZone: 'Asia/Kuala_Lumpur' });
-      select.add(new Option(label, value));
+  async function initPrayerMonthOptions() {
+    const select = $('#prayerMonthSelect'), hijriSelect = $('#prayerHijriMonthSelect'), mode = $('#prayerCalendarMode');
+    if (!select) return;
+    if (!select.dataset.ready) {
+      const [year, month] = malaysiaDate().split('-').map(Number), current = new Date(year, month - 1, 1);
+      for (let offset = -2; offset <= 10; offset++) {
+        const date = new Date(current.getFullYear(), current.getMonth() + offset, 1), value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        const label = date.toLocaleDateString('ms-MY', { month: 'long', year: 'numeric', timeZone: 'Asia/Kuala_Lumpur' });
+        select.add(new Option(label, value));
+      }
+      select.value = `${year}-${String(month).padStart(2, '0')}`;
+      select.dataset.ready = 'true';
+      select.addEventListener('change', () => { if (mode?.value !== 'hijri') window.loadPrayerMonth(); });
     }
-    select.value = `${year}-${String(month).padStart(2, '0')}`;
+    if (mode && !mode.dataset.ready) {
+      mode.addEventListener('change', async () => {
+        const isHijri = mode.value === 'hijri';
+        $('#prayerGregorianPicker')?.classList.toggle('hidden', isHijri);
+        $('#prayerHijriPicker')?.classList.toggle('hidden', !isHijri);
+        if (isHijri) await populateHijriMonthOptions();
+        window.loadPrayerMonth();
+      });
+      mode.dataset.ready = 'true';
+    }
+    if (hijriSelect && !hijriSelect.dataset.ready) {
+      hijriSelect.addEventListener('change', () => window.loadPrayerMonth());
+      hijriSelect.dataset.ready = 'true';
+    }
+    const printButton = document.querySelector('[data-print-prayer-month]');
+    if (printButton && !printButton.dataset.ready) {
+      printButton.addEventListener('click', () => {
+        const clean = () => document.body.classList.remove('print-prayer-month');
+        document.body.classList.add('print-prayer-month');
+        window.addEventListener('afterprint', clean, { once: true });
+        window.print();
+        setTimeout(clean, 1200);
+      });
+      printButton.dataset.ready = 'true';
+    }
+  }
+  function parsedHijriParts(value) {
+    const label = formatJAKIMHijri(value), match = label.match(/^([0-9]{1,2})\\s+(.+)\\s+(14[0-9]{2})H$/);
+    if (!match) return null;
+    const month = hijriMonths.findIndex(name => name.toLocaleLowerCase() === match[2].toLocaleLowerCase()) + 1;
+    return month ? { day: Number(match[1]), month, year: Number(match[3]) } : null;
+  }
+  async function loadGregorianYears(years) {
+    const results = await Promise.all(years.map(async year => {
+      try { const table = await loadPrayerYear(prayerZone, year); return { year, table }; }
+      catch (error) { console.info(`Jadual waktu solat ${year} belum tersedia.`, error); return null; }
+    }));
+    return results.filter(Boolean);
+  }
+  async function populateHijriMonthOptions() {
+    const select = $('#prayerHijriMonthSelect');
+    if (!select || (select.dataset.ready && select.options.length)) return;
+    select.innerHTML = '<option value="">Memuatkan bulan Hijrah…</option>';
+    const currentYear = Number(malaysiaDate().slice(0, 4));
+    const tables = await loadGregorianYears([currentYear, currentYear + 1]);
+    const choices = new Map();
+    let currentChoice = '';
+    for (const { table } of tables) {
+      const dateIndex = table.fields.indexOf('date'), hijriIndex = table.fields.indexOf('hijri');
+      if (hijriIndex < 0) continue;
+      for (const row of table.days) {
+        const parts = parsedHijriParts(row[hijriIndex]);
+        if (!parts) continue;
+        const key = `${parts.year}-${String(parts.month).padStart(2, '0')}`;
+        choices.set(key, `${hijriMonths[parts.month - 1]} ${parts.year}H`);
+        if (String(row[dateIndex] || '').slice(0, 10) === malaysiaDate()) currentChoice = key;
+      }
+    }
+    select.innerHTML = [...choices].map(([value, label]) => `<option value="${value}">${label}</option>`).join('');
+    if (!choices.size) throw new Error('Bulan Hijrah belum tersedia daripada takwim JAKIM.');
+    select.value = currentChoice || [...choices.keys()].at(-1);
     select.dataset.ready = 'true';
-    select.addEventListener('change', () => window.loadPrayerMonth());
+  }
+  async function loadHijriMonthRows(year, month) {
+    const approximateGregorianYear = Math.floor(year * 0.97 + 622);
+    const tables = await loadGregorianYears([approximateGregorianYear, approximateGregorianYear + 1]);
+    const rows = [];
+    for (const { table } of tables) {
+      const dateIndex = table.fields.indexOf('date'), hijriIndex = table.fields.indexOf('hijri');
+      if (dateIndex < 0 || hijriIndex < 0) continue;
+      for (const row of table.days) {
+        const parts = parsedHijriParts(row[hijriIndex]);
+        if (parts?.year === year && parts.month === month) rows.push({ row, fields: table.fields });
+      }
+    }
+    return rows;
   }
   window.loadPrayerMonth = async () => {
-    const select = $('#prayerMonthSelect'), list = $('#prayerMonthRows');
+    const select = $('#prayerMonthSelect'), list = $('#prayerMonthRows'), mode = $('#prayerCalendarMode')?.value || 'gregorian';
     if (!select || !list) return;
-    initPrayerMonthOptions();
-    const [yearText, monthText] = select.value.split('-'), year = Number(yearText), month = monthText;
-    const date = new Date(`${select.value}-01T12:00:00+08:00`);
-    $('#prayerMonthHeading').textContent = `Waktu solat · ${date.toLocaleDateString('ms-MY', { month: 'long', year: 'numeric', timeZone: 'Asia/Kuala_Lumpur' })}`;
+    await initPrayerMonthOptions();
+    list.innerHTML = '<div class="empty-state">Memuatkan jadual waktu solat…</div>';
     $('#prayerMonthZone').textContent = `Zon JAKIM ${prayerZone}`;
     $('#prayerMonthHijriDate').textContent = `Tarikh Hijrah hari ini · ${await hijriDateLabel()}`;
-    list.innerHTML = '<div class="empty-state">Memuatkan jadual sebulan…</div>';
     try {
-      const table = await loadPrayerYear(prayerZone, year), fields = table.fields, getIndex = name => fields.indexOf(name);
-      const dateIndex = getIndex('date'), monthRows = table.days.filter(row => String(row[dateIndex] || '').slice(0, 7) === `${yearText}-${month}`);
+      let monthRows = [], fields = [], heading = '';
+      if (mode === 'hijri') {
+        await populateHijriMonthOptions();
+        const [hijriYearText, hijriMonthText] = ($('#prayerHijriMonthSelect')?.value || '').split('-');
+        const hijriYear = Number(hijriYearText), hijriMonth = Number(hijriMonthText);
+        if (!hijriYear || !hijriMonth) throw new Error('Pilih bulan Hijrah yang tersedia.');
+        const records = await loadHijriMonthRows(hijriYear, hijriMonth);
+        monthRows = records.map(item => item.row);
+        fields = records[0]?.fields || [];
+        heading = `Waktu solat · ${hijriMonths[hijriMonth - 1]} ${hijriYear}H`;
+      } else {
+        const [yearText, monthText] = select.value.split('-'), year = Number(yearText);
+        const table = await loadPrayerYear(prayerZone, year);
+        fields = table.fields;
+        const dateIndex = fields.indexOf('date');
+        monthRows = table.days.filter(row => String(row[dateIndex] || '').slice(0, 7) === `${yearText}-${monthText}`);
+        const date = new Date(`${select.value}-01T12:00:00+08:00`);
+        heading = `Waktu solat · ${date.toLocaleDateString('ms-MY', { month: 'long', year: 'numeric', timeZone: 'Asia/Kuala_Lumpur' })}`;
+      }
+      $('#prayerMonthHeading').textContent = heading;
       if (!monthRows.length) throw new Error('Jadual bagi bulan ini belum tersedia.');
+      const getIndex = name => fields.indexOf(name), dateIndex = getIndex('date');
       const names = [['fajr', 'Subuh'], ['dhuhr', 'Zohor'], ['asr', 'Asar'], ['maghrib', 'Maghrib'], ['isha', 'Isyak']];
       list.innerHTML = (await Promise.all(monthRows.map(async row => {
         const day = String(row[dateIndex]).slice(0, 10), date = new Date(`${day}T12:00:00+08:00`);
@@ -276,7 +370,7 @@
       }))).join('');
     } catch (error) {
       console.warn('Jadual waktu solat bulanan gagal dimuatkan:', error);
-      list.innerHTML = '<div class="empty-state">Jadual bulanan tidak dapat dimuatkan. Cuba lagi kemudian atau rujuk laman e-Solat JAKIM.</div>';
+      list.innerHTML = '<div class="empty-state">Jadual bulanan tidak dapat dimuatkan. Semak sambungan internet atau pilih bulan lain.</div>';
     }
   };
   async function loadPrayerFromSolatMy(zone) {
