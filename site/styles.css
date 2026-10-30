@@ -574,3 +574,4 @@ body.ajk-mode #page-kewangan [data-open="transaction"],body.ajk-mode #page-kewan
 .calendar-mark.school-holiday{background:#eaf0ff;color:#4b5e92}
 .school-holiday-dot{background:#687db7}
 @media(max-width:700px){.announcement-slide{max-width:100%;padding:10px 12px}.announcement-slide h2,.announcement-slide p{max-width:100%}.finance-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){#page-rumah>.page-title-row{display:grid;grid-template-columns:1fr;justify-items:start;align-items:start;gap:12px;margin-bottom:20px}#page-rumah>.page-title-row>[data-toggle-age-summary]{justify-self:start;margin-top:0}}
