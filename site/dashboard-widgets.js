@@ -1,6 +1,6 @@
 (() => {
   const $ = selector => document.querySelector(selector);
-  const weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=2.9788811&longitude=101.5361309&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,sunrise,sunset&forecast_days=7&timezone=Asia%2FKuala_Lumpur';
+  const weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=2.9788811&longitude=101.5361309&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,sunrise,sunset&forecast_days=16&timezone=Asia%2FKuala_Lumpur';
   const apimsUrl = 'https://eqms.doe.gov.my/api3/publicportalapims/mapcaqm';
   const taman = { latitude: 2.9788811, longitude: 101.5361309 };
   let prayerZone = 'SGR01';
@@ -18,6 +18,7 @@
   const dayLabel = (date, index) => index === 0 ? 'Hari ini' : new Date(`${date}T12:00:00`).toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'short' });
   const displayTime = value => String(value || '').match(/\d{1,2}:\d{2}/)?.[0] || '—';
   const number = value => value === null || value === undefined || String(value).trim() === '' || !Number.isFinite(Number(value)) ? null : Number(value);
+  const prayerYearCache = new Map();
 
   function renderWeatherDay(weather, index, detail = false) {
     const date = weather.daily.time[index], [condition, symbol] = weatherDescription(Number(weather.daily.weather_code[index]));
@@ -37,7 +38,7 @@
       const [description, icon] = weatherDescription(Number(weather.current?.weather_code));
       current.innerHTML = `<span class="weather-icon">${icon}</span><b>${Math.round(weather.current?.temperature_2m ?? 0)}°C</b><span>${description}</span>`;
       forecast.innerHTML = (weather.daily?.time || []).slice(0, 3).map((_, index) => renderWeatherDay(weather, index)).join('') || '<p class="widget-muted">Ramalan belum tersedia.</p>';
-      $('#weatherUpdated').textContent = `Sumber: Open-Meteo · ${new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })} · Tekan untuk 7 hari`;
+      $('#weatherUpdated').textContent = `Open-Meteo · ${new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })} · Tekan untuk 16 hari`;
       $('#weatherDetailCurrent').textContent = `${icon} ${Math.round(weather.current.temperature_2m)}°C · ${description}`;
       $('#weatherDetailIcon').textContent = icon;
       $('#weatherFeelsLike').textContent = `${Math.round(weather.current.apparent_temperature)}°C`;
@@ -57,8 +58,7 @@
   function toRows(payload) {
     if (Array.isArray(payload)) return payload.flatMap(item => item?.attributes ? [item.attributes] : item?.properties ? [item.properties] : [item]);
     if (payload && typeof payload === 'object') {
-      for (const key of ['features', 'data', 'stations', 'results', 'items', 'records']) if (Array.isArray(payload[key])) return toRows(payload[key]);
-      if (Array.isArray(payload.result?.features)) return toRows(payload.result.features);
+      for (const key of ['features', 'data', 'stations', 'results', 'items', 'records', 'result']) if (payload[key] && payload[key] !== payload) { const rows = toRows(payload[key]); if (rows.length) return rows; }
     }
     return [];
   }
@@ -80,7 +80,7 @@
     return null;
   }
   function airIndex(row) {
-    const raw = getField(row, ['API', 'AQI', 'CURRENT_API', 'IPU', 'VALUE', 'CAQM_API', 'API_VALUE']);
+    const raw = getField(row, ['API', 'CURRENT_API', 'IPU', 'CAQM_API', 'API_VALUE', 'API_INDEX', 'AIR_POLLUTANT_INDEX']);
     const found = String(raw ?? '').match(/\d{1,3}/);
     return found ? Number(found[0]) : null;
   }
@@ -99,18 +99,18 @@
         const api = airIndex(row);
         const distance = lat === null || lon === null ? Infinity : Math.hypot((lat - taman.latitude) * 111, (lon - taman.longitude) * 111 * Math.cos(taman.latitude * Math.PI / 180));
         return { row, lat, lon, api, distance };
-      }).filter(item => item.api !== null && item.distance !== Infinity).sort((a, b) => a.distance - b.distance);
-      const nearest = rows[0];
+      }).filter(item => item.api !== null);
+      const nearest = [...rows].filter(item => item.distance !== Infinity).sort((a, b) => a.distance - b.distance)[0] || rows.find(item => /SHAH ALAM|BATU TIGA|T\.T\.D\.I|SUBANG/i.test(String(getField(item.row, ['STATION_LOCATION', 'LOCATION', 'STATION_NAME', 'STATION', 'NAME', 'STATIONNAME']) || '')));
       if (!nearest) throw new Error('Format data APIMS tidak dapat dibaca.');
       const [status, className] = airStatus(nearest.api);
       output.innerHTML = `<span class="ipu-value ${className}">${nearest.api}</span> <span class="ipu-status">${status}</span>`;
-      const name = getField(nearest.row, ['STATION_LOCATION', 'LOCATION', 'STATION_NAME', 'STATION', 'NAME', 'STATIONNAME']) || 'Stesen JAS terdekat';
+      const name = getField(nearest.row, ['STATION_LOCATION', 'LOCATION', 'STATION_NAME', 'STATION', 'NAME', 'STATIONNAME']) || 'Stesen JAS sekitar Shah Alam';
       const updated = getField(nearest.row, ['DATETIME', 'TIMESTAMP', 'UPDATED_AT', 'READING_TIME', 'TIME']);
       stationOutput.textContent = `${name}${nearest.distance < 100 ? ` · kira-kira ${Math.round(nearest.distance)} km` : ''}${updated ? ` · ${updated}` : ''}`;
     } catch (error) {
       console.warn('Bacaan IPU APIMS tidak tersedia:', error);
-      output.textContent = '—';
-      stationOutput.innerHTML = '<a href="https://eqms.doe.gov.my/APIMS/main" target="_blank" rel="noopener">Lihat bacaan rasmi JAS / APIMS ↗</a>';
+      output.innerHTML = '<span class="ipu-unavailable">Tak tersedia</span>';
+      stationOutput.innerHTML = '<a class="ipu-source-link" href="https://eqms.doe.gov.my/APIMS/main" target="_blank" rel="noopener">Semak IPU semasa di JAS / APIMS ↗</a>';
     }
   }
 
@@ -164,18 +164,63 @@
     return `${value.year}-${value.month}-${value.day}`;
   }
 
+  async function loadPrayerYear(zone, year) {
+    const key = `${zone}:${year}`;
+    if (prayerYearCache.has(key)) return prayerYearCache.get(key);
+    const request = (async () => {
+      const index = await requestJson('https://sajadah.org/api/v1/regions.json');
+      const region = (index.regions || []).find(item => String(item.zone || '').toUpperCase() === zone);
+      if (!region?.id) throw new Error(`Zon ${zone} tidak dijumpai.`);
+      const table = await requestJson(`https://sajadah.org/api/v1/times/my/${encodeURIComponent(region.id)}/${year}.json`);
+      if (!Array.isArray(table.days) || !Array.isArray(table.fields)) throw new Error('Jadual tahunan waktu solat tiada format yang dikenali.');
+      return table;
+    })();
+    prayerYearCache.set(key, request);
+    try { return await request; } catch (error) { prayerYearCache.delete(key); throw error; }
+  }
   async function loadPrayerFromOpenData(zone) {
-    const index = await requestJson('https://sajadah.org/api/v1/regions.json');
-    const region = (index.regions || []).find(item => String(item.zone || '').toUpperCase() === zone);
-    if (!region?.id) throw new Error(`Zon ${zone} tidak dijumpai.`);
-    const year = Number(malaysiaDate().slice(0, 4));
-    const table = await requestJson(`https://sajadah.org/api/v1/times/my/${encodeURIComponent(region.id)}/${year}.json`);
-    const fields = table.fields || [];
-    const today = (table.days || []).find(row => row[fields.indexOf('date')] === malaysiaDate());
+    const year = Number(malaysiaDate().slice(0, 4)), table = await loadPrayerYear(zone, year), fields = table.fields || [];
+    const today = (table.days || []).find(row => String(row[fields.indexOf('date')] || '').slice(0, 10) === malaysiaDate());
     if (!today) throw new Error('Jadual untuk hari ini belum tersedia.');
     const value = name => { const index = fields.indexOf(name); return index >= 0 ? today[index] : ''; };
     return { fajr: value('fajr'), dhuhr: value('dhuhr'), asr: value('asr'), maghrib: value('maghrib'), isha: value('isha') };
   }
+  function initPrayerMonthOptions() {
+    const select = $('#prayerMonthSelect');
+    if (!select || select.dataset.ready) return;
+    const [year, month] = malaysiaDate().split('-').map(Number), current = new Date(year, month - 1, 1);
+    for (let offset = -2; offset <= 10; offset++) {
+      const date = new Date(current.getFullYear(), current.getMonth() + offset, 1), value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const label = date.toLocaleDateString('ms-MY', { month: 'long', year: 'numeric', timeZone: 'Asia/Kuala_Lumpur' });
+      select.add(new Option(label, value));
+    }
+    select.value = `${year}-${String(month).padStart(2, '0')}`;
+    select.dataset.ready = 'true';
+    select.addEventListener('change', () => window.loadPrayerMonth());
+  }
+  window.loadPrayerMonth = async () => {
+    const select = $('#prayerMonthSelect'), list = $('#prayerMonthRows');
+    if (!select || !list) return;
+    initPrayerMonthOptions();
+    const [yearText, monthText] = select.value.split('-'), year = Number(yearText), month = monthText;
+    const date = new Date(`${select.value}-01T12:00:00+08:00`);
+    $('#prayerMonthHeading').textContent = `Waktu solat · ${date.toLocaleDateString('ms-MY', { month: 'long', year: 'numeric', timeZone: 'Asia/Kuala_Lumpur' })}`;
+    $('#prayerMonthZone').textContent = `Zon JAKIM ${prayerZone}`;
+    list.innerHTML = '<div class="empty-state">Memuatkan jadual sebulan…</div>';
+    try {
+      const table = await loadPrayerYear(prayerZone, year), fields = table.fields, getIndex = name => fields.indexOf(name);
+      const dateIndex = getIndex('date'), monthRows = table.days.filter(row => String(row[dateIndex] || '').slice(0, 7) === `${yearText}-${month}`);
+      if (!monthRows.length) throw new Error('Jadual bagi bulan ini belum tersedia.');
+      const names = [['fajr', 'Subuh'], ['dhuhr', 'Zohor'], ['asr', 'Asar'], ['maghrib', 'Maghrib'], ['isha', 'Isyak']];
+      list.innerHTML = monthRows.map(row => {
+        const day = String(row[dateIndex]).slice(0, 10), label = new Date(`${day}T12:00:00+08:00`).toLocaleDateString('ms-MY', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kuala_Lumpur' });
+        return `<article class="prayer-month-day"><b>${label}</b><div>${names.map(([field, name]) => `<span>${name}<strong>${displayTime(row[getIndex(field)])}</strong></span>`).join('')}</div></article>`;
+      }).join('');
+    } catch (error) {
+      console.warn('Jadual waktu solat bulanan gagal dimuatkan:', error);
+      list.innerHTML = '<div class="empty-state">Jadual bulanan tidak dapat dimuatkan. Cuba lagi kemudian atau rujuk laman e-Solat JAKIM.</div>';
+    }
+  };
   async function loadPrayerFromSolatMy(zone) {
     const result = await requestJson(`https://solat.my/api/daily/${encodeURIComponent(zone)}`);
     const day = result.prayerTime?.[0] || result.data?.prayerTime?.[0] || result.data?.[0] || result.data || result;
@@ -191,10 +236,19 @@
       if (prayers.some(([, time]) => !displayTime(time).match(/^\d{1,2}:\d{2}$/))) throw new Error('Format waktu solat tidak lengkap.');
       const clock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kuala_Lumpur', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date());
       const [hourNow, minutePart] = clock.split(':').map(Number), minuteNow = hourNow * 60 + minutePart;
-      const upcoming = prayers.find(([, time]) => { const match = displayTime(time).match(/^(\d{1,2}):(\d{2})$/); return match && Number(match[1]) * 60 + Number(match[2]) > minuteNow; });
-      const nextTime = upcoming || prayers[0];
+      const toMinutes = time => { const match = displayTime(time).match(/^(\d{1,2}):(\d{2})$/); return match ? Number(match[1]) * 60 + Number(match[2]) : null; };
+      const upcomingIndex = prayers.findIndex(([, time]) => toMinutes(time) > minuteNow), currentIndex = upcomingIndex < 0 ? 0 : upcomingIndex;
+      const nextTime = prayers[currentIndex], upcoming = upcomingIndex >= 0;
       next.innerHTML = `Seterusnya: <b>${nextTime[0]} · ${displayTime(nextTime[1])}${upcoming ? '' : ' esok'}</b>`;
-      times.innerHTML = prayers.map(([name, time]) => `<div><span>${name}</span><b>${displayTime(time)}</b></div>`).join('');
+      times.innerHTML = prayers.map(([name, time], index) => `<div class="${index === currentIndex ? 'prayer-time-next' : ''}"><span>${name}</span><b>${displayTime(time)}</b></div>`).join('');
+      let start, end, now = minuteNow;
+      if (upcomingIndex === 0) { start = toMinutes(prayers[4][1]); end = toMinutes(prayers[0][1]) + 1440; now += 1440; }
+      else if (upcomingIndex > 0) { start = toMinutes(prayers[upcomingIndex - 1][1]); end = toMinutes(prayers[upcomingIndex][1]); }
+      else { start = toMinutes(prayers[4][1]); end = toMinutes(prayers[0][1]) + 1440; }
+      const progress = Math.max(0, Math.min(100, end > start ? ((now - start) / (end - start)) * 100 : 0));
+      $('#prayerProgressFill').style.width = `${progress}%`;
+      $('#prayerProgressMarker').style.left = `${progress}%`;
+      $('#prayerProgressLabel').textContent = `Menuju ${nextTime[0]} · ${Math.round(progress)}%`;
       $('#prayerUpdated').textContent = `Jadual e-Solat JAKIM · Zon ${prayerZone}`;
     } catch (error) {
       console.error('Gagal memuatkan waktu solat Shah Alam:', error);
@@ -220,7 +274,9 @@
     prayerZone = configuredZone;
     $('#prayerUpdated').textContent = `Memuatkan zon ${prayerZone}…`;
     loadPrayerTimes();
+    window.loadPrayerMonth?.();
   });
+  initPrayerMonthOptions();
   loadWeather();
   loadAirIndex();
   loadRiverReadings();
