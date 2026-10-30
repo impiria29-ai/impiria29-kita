@@ -9,7 +9,7 @@ create table if not exists public.profiles (
   phone text not null,
   requested_house_number smallint check (requested_house_number between 1 and 43),
   house_number smallint check (house_number between 1 and 43),
-  role text not null default 'resident' check (role in ('resident','ajk','admin')),
+  role text not null default 'resident' check (role in ('resident','ajk','bendahari','admin')),
   approval_status text not null default 'pending' check (approval_status in ('pending','approved','rejected')),
   created_at timestamptz not null default now()
 );
@@ -45,7 +45,11 @@ as $$ select exists (select 1 from public.profiles p where p.user_id = auth.uid(
 
 create or replace function public.is_admin()
 returns boolean language sql stable security definer set search_path = public, auth
-as $$ select exists (select 1 from public.profiles p where p.user_id = auth.uid() and p.approval_status = 'approved' and p.role = 'admin') $$;
+as $ select exists (select 1 from public.profiles p where p.user_id = auth.uid() and p.approval_status = 'approved' and p.role = 'admin') $;
+
+create or replace function public.is_finance_manager()
+returns boolean language sql stable security definer set search_path = public, auth
+as $ select exists (select 1 from public.profiles p where p.user_id = auth.uid() and p.approval_status = 'approved' and p.role in ('bendahari','admin')) $;
 
 create or replace function public.create_pending_profile()
 returns trigger language plpgsql security definer set search_path = public
@@ -77,6 +81,22 @@ begin
   select data into v_data from public.community_state where state_key = 'impiria29';
   if v_data is null then return null; end if;
   if v_profile.role = 'admin' then return v_data; end if;
+  if v_profile.role = 'bendahari' then
+    return jsonb_build_object(
+      'announcements',coalesce(v_data->'announcements','[]'::jsonb),
+      'events',coalesce(v_data->'events','[]'::jsonb),
+      'committee',coalesce(v_data->'committee','[]'::jsonb),
+      'committeeRoles',coalesce(v_data->'committeeRoles','[]'::jsonb),
+      'committeeTerm',coalesce(v_data->'committeeTerm','""'::jsonb),
+      'committeeHistory',coalesce(v_data->'committeeHistory','[]'::jsonb),
+      'polls',coalesce(v_data->'polls','[]'::jsonb),
+      'households','[]'::jsonb,
+      'residentBlocks',coalesce((select jsonb_agg(jsonb_build_object('id',b->>'id','number',b->>'number','status',b->>'status') order by (b->>'number')::int) from jsonb_array_elements(coalesce(v_data->'residentBlocks','[]'::jsonb)) b),'[]'::jsonb),
+      'residentNotices',coalesce((select jsonb_agg(n) from jsonb_array_elements(coalesce(v_data->'residentNotices','[]'::jsonb)) n where n->>'status'='published' and n->>'audience'='Semua penduduk'),'[]'::jsonb),
+      'transactions',coalesce(v_data->'transactions','[]'::jsonb),
+      'auditLogs','[]'::jsonb
+    );
+  end if;
   v_house := v_profile.house_number;
   if v_profile.role = 'ajk' then
     return v_data || jsonb_build_object('transactions','[]'::jsonb,'auditLogs','[]'::jsonb);
@@ -103,9 +123,15 @@ returns void language plpgsql security definer set search_path = public, auth
 as $$
 declare v_old jsonb;
 begin
-  if not public.is_ajk() then raise exception 'Hanya AJK boleh menyimpan kandungan komuniti.'; end if;
+  if not public.is_ajk() and not public.is_finance_manager() then raise exception 'Akaun tidak dibenarkan menyimpan data komuniti.'; end if;
   if jsonb_typeof(p_data) <> 'object' then raise exception 'Format data tidak sah.'; end if;
   select data into v_old from public.community_state where state_key='impiria29' for update;
+  if v_old is null then raise exception 'Data komuniti belum disediakan.'; end if;
+  if public.is_finance_manager() and not public.is_admin() and not public.is_ajk() then
+    if jsonb_typeof(p_data->'transactions') <> 'array' then raise exception 'Senarai transaksi tidak sah.'; end if;
+    update public.community_state set data=jsonb_set(v_old,'{transactions}',p_data->'transactions',true),updated_by=auth.uid(),updated_at=now() where state_key='impiria29';
+    return;
+  end if;
   if not public.is_admin() then
     p_data := p_data || jsonb_build_object('transactions',coalesce(v_old->'transactions','[]'::jsonb),'auditLogs',coalesce(v_old->'auditLogs','[]'::jsonb));
   end if;
@@ -290,7 +316,7 @@ begin
   if p_approval_status = 'approved' and p_house_number is null then
     raise exception 'Pilih nombor rumah sebelum meluluskan akaun.';
   end if;
-  if p_role is null or p_role not in ('resident','ajk','admin') then raise exception 'Peranan tidak sah.'; end if;
+  if p_role is null or p_role not in ('resident','ajk','bendahari','admin') then raise exception 'Peranan tidak sah.'; end if;
 
   select p.role into v_target_role from public.profiles p where p.user_id=p_user_id for update;
   if not found then raise exception 'Akaun tidak ditemui.'; end if;
