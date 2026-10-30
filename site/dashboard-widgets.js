@@ -256,7 +256,8 @@
       const upcomingIndex = prayers.findIndex(([, time]) => toMinutes(time) > minuteNow), currentIndex = upcomingIndex < 0 ? 0 : upcomingIndex;
       const nextTime = prayers[currentIndex], upcoming = upcomingIndex >= 0;
       next.innerHTML = `Seterusnya: <b>${nextTime[0]} · ${displayTime(nextTime[1])}${upcoming ? '' : ' esok'}</b>`;
-      times.innerHTML = prayers.map(([name, time], index) => `<div class="${index === currentIndex ? 'prayer-time-next' : ''}"><span>${name}</span><b>${displayTime(time)}</b></div>`).join('');
+      const prayerSymbols = { Subuh: '◒', Zohor: '☀', Asar: '◉', Maghrib: '◓', Isyak: '☾' };
+      times.innerHTML = prayers.map(([name, time], index) => `<div class="${index === currentIndex ? 'prayer-time-next' : ''}"><i class="prayer-time-symbol prayer-symbol-${name.toLowerCase()}" aria-hidden="true">${prayerSymbols[name]}</i><span class="prayer-time-name">${name}</span><b>${displayTime(time)}</b></div>`).join('');
       let start, end, now = minuteNow;
       if (upcomingIndex === 0) { start = toMinutes(prayers[4][1]); end = toMinutes(prayers[0][1]) + 1440; now += 1440; }
       else if (upcomingIndex > 0) { start = toMinutes(prayers[upcomingIndex - 1][1]); end = toMinutes(prayers[upcomingIndex][1]); }
