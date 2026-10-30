@@ -540,3 +540,8 @@ body.print-prayer-month #page-solat .prayer-print-watermark{position:fixed!impor
 .finance-cards{grid-template-columns:repeat(auto-fit,minmax(175px,1fr))}body.ajk-mode #page-kewangan .ledger th:last-child,body.ajk-mode #page-kewangan .ledger td:last-child{display:none}body.ajk-mode #page-kewangan [data-open="transaction"],body.ajk-mode #page-kewangan [data-edit="transaction"],body.ajk-mode #page-kewangan [data-delete="transaction"]{display:none!important}@media(max-width:700px){.finance-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 .finance-cards{grid-template-columns:repeat(auto-fit,minmax(175px,1fr))}body.ajk-mode #page-kewangan .finance-cards,body.ajk-mode #page-kewangan .finance-report-panel{display:none!important}body.ajk-mode #page-kewangan .ledger{display:block!important}body.ajk-mode #page-kewangan .ledger th:last-child,body.ajk-mode #page-kewangan .ledger td:last-child{display:none!important}.transaction-category-examples small{display:block;margin-top:6px;color:#75847b;font-size:11px;line-height:1.5}@media(max-width:700px){.finance-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Finance dashboard: compact, crisp charts that stay inside each card. */
+.finance-chart-wrap{height:220px!important;min-width:0!important;overflow:hidden!important}
+.finance-chart-wrap canvas{display:block!important;width:100%!important;height:220px!important;min-width:0!important;max-width:100%!important}
+.finance-report-controls label.report-signoff-input{flex:1 1 190px;min-width:180px}
