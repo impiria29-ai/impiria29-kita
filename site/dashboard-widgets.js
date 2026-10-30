@@ -124,6 +124,40 @@
     } finally { clearTimeout(timer); }
   }
 
+  function riverStatus(level, thresholds) {
+    if (thresholds.danger !== null && level >= thresholds.danger) return ['Bahaya', 'danger'];
+    if (thresholds.warning !== null && level >= thresholds.warning) return ['Amaran', 'warning'];
+    if (thresholds.alert !== null && level >= thresholds.alert) return ['Waspada', 'alert'];
+    return ['Normal', 'normal'];
+  }
+  function escapeHtml(value) { return String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char])); }
+  async function loadRiverReadings() {
+    const list = $('#riverStationSummary'), updated = $('#riverDataUpdated');
+    if (!list || !updated) return;
+    const requested = new Map([['3015435', 'Batu Tiga'], ['3015490', 'T.T.D.I Jaya, Shah Alam'], ['3115404', 'Kampung Melayu Subang']]);
+    try {
+      const response = await fetch('https://publicinfobanjir.water.gov.my/waterleveldata/Selangor', { cache: 'no-store' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const html = await response.text(), documentData = new DOMParser().parseFromString(html, 'text/html');
+      const stations = [...documentData.querySelectorAll('tr')].map(row => [...row.querySelectorAll('td')].map(cell => cell.textContent.trim().replace(/\s+/g, ' '))).filter(cells => requested.has(cells[1]));
+      if (!stations.length) throw new Error('Stesen rujukan tidak dijumpai dalam jadual.');
+      list.innerHTML = stations.map(cells => {
+        const name = cells[2] || requested.get(cells[1]), river = cells[5] || 'Sungai di daerah Petaling', time = cells[6] || '—';
+        const level = Number(String(cells[7] || '').replace(/[^\d.-]/g, ''));
+        if (!Number.isFinite(level) || [-9999, -8888].includes(level)) return '';
+        const thresholds = { alert: Number(cells[9]), warning: Number(cells[10]), danger: Number(cells[11]) };
+        for (const key of Object.keys(thresholds)) if (!Number.isFinite(thresholds[key]) || thresholds[key] < -100) thresholds[key] = null;
+        const [status, statusClass] = riverStatus(level, thresholds);
+        return `<article class="river-station-card river-live-card"><span class="river-station-mark">〰</span><div><b>${escapeHtml(name)}</b><small>${escapeHtml(river)} · ${escapeHtml(time)}</small></div><strong>${level.toFixed(2)} m</strong><span class="river-status ${statusClass}">${status}</span></article>`;
+      }).filter(Boolean).join('');
+      if (!list.innerHTML) throw new Error('Bacaan stesen belum tersedia.');
+      updated.textContent = 'Bacaan diambil daripada Public InfoBanjir JPS · semak masa kemas kini pada setiap stesen.';
+    } catch (error) {
+      console.info('Bacaan sungai JPS dibuka terus melalui pautan rasmi.', error);
+      updated.textContent = 'Paparan bacaan automatik tidak tersedia pada browser ini. Tekan “Bacaan langsung JPS” untuk data semasa.';
+    }
+  }
+
   function malaysiaDate() {
     const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kuala_Lumpur', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
     const value = Object.fromEntries(parts.map(part => [part.type, part.value]));
@@ -189,6 +223,7 @@
   });
   loadWeather();
   loadAirIndex();
+  loadRiverReadings();
   loadPrayerTimes();
 })();
 
