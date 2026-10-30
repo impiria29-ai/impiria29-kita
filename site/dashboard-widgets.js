@@ -2,6 +2,7 @@
   const $ = selector => document.querySelector(selector);
   const weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=2.9788811&longitude=101.5361309&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,sunrise,sunset&forecast_days=16&timezone=Asia%2FKuala_Lumpur';
   const apimsUrl = 'https://eqms.doe.gov.my/api3/publicportalapims/mapcaqm';
+  const apimsLayerUrl = 'https://eqms.doe.gov.my/api3/publicmapproxy/PUBLIC_DISPLAY/CAQM_MCAQM_Current_Reading/MapServer/0/query?where=1%3D1&outFields=*&returnGeometry=false&f=json';
   const taman = { latitude: 2.9788811, longitude: 101.5361309 };
   let prayerZone = 'SGR01';
   const weatherDescription = code => {
@@ -19,6 +20,11 @@
   const displayTime = value => String(value || '').match(/\d{1,2}:\d{2}/)?.[0] || '—';
   const number = value => value === null || value === undefined || String(value).trim() === '' || !Number.isFinite(Number(value)) ? null : Number(value);
   const prayerYearCache = new Map();
+  function hijriDateLabel(date = new Date()) {
+    const options = { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuala_Lumpur' };
+    try { return new Intl.DateTimeFormat('ms-MY-u-ca-islamic-umalqura', options).format(date).replace(/\s*(?:AH|H)$/i, '') + 'H'; }
+    catch { return new Intl.DateTimeFormat('ms-MY-u-ca-islamic', options).format(date).replace(/\s*(?:AH|H)$/i, '') + 'H'; }
+  }
 
   function renderWeatherDay(weather, index, detail = false) {
     const date = weather.daily.time[index], [condition, symbol] = weatherDescription(Number(weather.daily.weather_code[index]));
@@ -80,7 +86,7 @@
     return null;
   }
   function airIndex(row) {
-    const raw = getField(row, ['API', 'CURRENT_API', 'IPU', 'CAQM_API', 'API_VALUE', 'API_INDEX', 'AIR_POLLUTANT_INDEX']);
+    const raw = getField(row, ['API', 'CURRENT_API', 'CURRENTAPI', 'IPU', 'CAQM_API', 'API_VALUE', 'API_INDEX', 'AIR_POLLUTANT_INDEX', 'API24H', 'API_24H', 'CURRENT_API_VALUE']);
     const found = String(raw ?? '').match(/\d{1,3}/);
     return found ? Number(found[0]) : null;
   }
@@ -94,23 +100,29 @@
   async function loadAirIndex() {
     const output = $('#currentIpu'), stationOutput = $('#ipuStation');
     try {
-      const result = await requestJson(apimsUrl, 10000), rows = toRows(result).map(row => {
-        const lat = coordinate(row, ['LATITUDE', 'LAT', 'Y']), lon = coordinate(row, ['LONGITUDE', 'LON', 'LNG', 'X']);
-        const api = airIndex(row);
-        const distance = lat === null || lon === null ? Infinity : Math.hypot((lat - taman.latitude) * 111, (lon - taman.longitude) * 111 * Math.cos(taman.latitude * Math.PI / 180));
-        return { row, lat, lon, api, distance };
-      }).filter(item => item.api !== null);
-      const nearest = [...rows].filter(item => item.distance !== Infinity).sort((a, b) => a.distance - b.distance)[0] || rows.find(item => /SHAH ALAM|BATU TIGA|T\.T\.D\.I|SUBANG/i.test(String(getField(item.row, ['STATION_LOCATION', 'LOCATION', 'STATION_NAME', 'STATION', 'NAME', 'STATIONNAME']) || '')));
-      if (!nearest) throw new Error('Format data APIMS tidak dapat dibaca.');
-      const [status, className] = airStatus(nearest.api);
-      output.innerHTML = `<span class="ipu-value ${className}">${nearest.api}</span> <span class="ipu-status">${status}</span>`;
-      const name = getField(nearest.row, ['STATION_LOCATION', 'LOCATION', 'STATION_NAME', 'STATION', 'NAME', 'STATIONNAME']) || 'Stesen JAS sekitar Shah Alam';
-      const updated = getField(nearest.row, ['DATETIME', 'TIMESTAMP', 'UPDATED_AT', 'READING_TIME', 'TIME']);
-      stationOutput.textContent = `${name}${nearest.distance < 100 ? ` · kira-kira ${Math.round(nearest.distance)} km` : ''}${updated ? ` · ${updated}` : ''}`;
+      let target = null;
+      for (const url of [apimsUrl, apimsLayerUrl]) {
+        try {
+          const rows = toRows(await requestJson(url, 10000));
+          target = rows.find(row => {
+            const code = getField(row, ['STATION_ID', 'STATIONID', 'STATION_CODE', 'STATIONCODE', 'SITE_ID', 'SITEID', 'SITE_CODE', 'SITECODE', 'STATION_NO', 'STN', 'MCAQM_ID', 'CAQM_ID', 'CODE', 'ID']);
+            const name = getField(row, ['STATION_LOCATION', 'LOCATION', 'STATION_NAME', 'STATION', 'NAME', 'STATIONNAME', 'PLACE', 'LOCATION_NAME']);
+            return String(code || '').trim().toUpperCase() === 'MCAQM001' || /JOHAN\s+SETIA/i.test(String(name || ''));
+          }) || null;
+          if (target) break;
+        } catch (sourceError) { console.info('Sumber APIMS tidak tersedia, cuba saluran data seterusnya.', sourceError); }
+      }
+      if (!target) throw new Error('Stesen Johan Setia MCAQM001 tiada dalam respons APIMS.');
+      const value = airIndex(target);
+      if (value === null) throw new Error('Bacaan IPU stesen MCAQM001 tiada.');
+      const [status, className] = airStatus(value);
+      output.innerHTML = `<span class="ipu-value ${className}">${value}</span> <span class="ipu-status">${status}</span>`;
+      const updated = getField(target, ['DATETIME', 'TIMESTAMP', 'UPDATED_AT', 'READING_TIME', 'TIME', 'DATE_TIME', 'LAST_UPDATED']);
+      stationOutput.textContent = `Johan Setia · MCAQM001${updated ? ` · ${updated}` : ''}`;
     } catch (error) {
       console.warn('Bacaan IPU APIMS tidak tersedia:', error);
       output.innerHTML = '<span class="ipu-unavailable">Tak tersedia</span>';
-      stationOutput.innerHTML = '<a class="ipu-source-link" href="https://eqms.doe.gov.my/APIMS/main" target="_blank" rel="noopener">Semak IPU semasa di JAS / APIMS ↗</a>';
+      stationOutput.innerHTML = '<a class="ipu-source-link" href="https://eqms.doe.gov.my/APIMS/main" target="_blank" rel="noopener">Johan Setia · MCAQM001 — semak APIMS ↗</a>';
     }
   }
 
@@ -135,8 +147,9 @@
     const list = $('#riverStationSummary'), updated = $('#riverDataUpdated');
     if (!list || !updated) return;
     const requested = new Map([['0232961WL', 'SG. KLANG DI KG. LOMBONG']]);
+    const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 12000);
     try {
-      const response = await fetch('https://publicinfobanjir.water.gov.my/waterleveldata/Selangor', { cache: 'no-store' });
+      const response = await fetch('https://publicinfobanjir.water.gov.my/index.php/waterleveldata/Selangor', { cache: 'no-store', signal: controller.signal });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const html = await response.text(), documentData = new DOMParser().parseFromString(html, 'text/html');
       const stations = [...documentData.querySelectorAll('tr')].map(row => [...row.querySelectorAll('td')].map(cell => cell.textContent.trim().replace(/\s+/g, ' '))).filter(cells => requested.has(cells[1]));
@@ -156,6 +169,7 @@
       console.info('Bacaan sungai JPS dibuka terus melalui pautan rasmi.', error);
       list.innerHTML = '<article class="river-station-card"><span class="river-station-mark">〰</span><div><b>SG. KLANG DI KG. LOMBONG</b><small>Sungai Klang · Klang</small></div><a href="https://infobanjirjps.selangor.gov.my/water-level-graph.html?station=872" target="_blank" rel="noopener">Lihat bacaan JPS ↗</a></article>';
       updated.textContent = 'Bacaan langsung tidak dapat dimuatkan dalam app. Buka graf rasmi JPS untuk bacaan semasa.';
+    } finally { clearTimeout(timeout); }
     }
   }
 
@@ -207,6 +221,7 @@
     const date = new Date(`${select.value}-01T12:00:00+08:00`);
     $('#prayerMonthHeading').textContent = `Waktu solat · ${date.toLocaleDateString('ms-MY', { month: 'long', year: 'numeric', timeZone: 'Asia/Kuala_Lumpur' })}`;
     $('#prayerMonthZone').textContent = `Zon JAKIM ${prayerZone}`;
+    $('#prayerMonthHijriDate').textContent = `Tarikh Hijrah hari ini · ${hijriDateLabel()}`;
     list.innerHTML = '<div class="empty-state">Memuatkan jadual sebulan…</div>';
     try {
       const table = await loadPrayerYear(prayerZone, year), fields = table.fields, getIndex = name => fields.indexOf(name);
@@ -215,7 +230,7 @@
       const names = [['fajr', 'Subuh'], ['dhuhr', 'Zohor'], ['asr', 'Asar'], ['maghrib', 'Maghrib'], ['isha', 'Isyak']];
       list.innerHTML = monthRows.map(row => {
         const day = String(row[dateIndex]).slice(0, 10), label = new Date(`${day}T12:00:00+08:00`).toLocaleDateString('ms-MY', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kuala_Lumpur' });
-        return `<article class="prayer-month-day"><b>${label}</b><div>${names.map(([field, name]) => `<span>${name}<strong>${displayTime(row[getIndex(field)])}</strong></span>`).join('')}</div></article>`;
+        return `<article class="prayer-month-day"><div class="prayer-calendar-date"><b>${label}</b><small>${hijriDateLabel(new Date(`${day}T12:00:00+08:00`))}</small></div><div>${names.map(([field, name]) => `<span>${name}<strong>${displayTime(row[getIndex(field)])}</strong></span>`).join('')}</div></article>`;
       }).join('');
     } catch (error) {
       console.warn('Jadual waktu solat bulanan gagal dimuatkan:', error);
@@ -277,6 +292,7 @@
     loadPrayerTimes();
     window.loadPrayerMonth?.();
   });
+  if ($('#prayerHijriDate')) $('#prayerHijriDate').textContent = `Tarikh Hijrah · ${hijriDateLabel()}`;
   initPrayerMonthOptions();
   loadWeather();
   loadAirIndex();
