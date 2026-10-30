@@ -22,12 +22,42 @@
   const displayTime = value => String(value || '').match(/\d{1,2}:\d{2}/)?.[0] || '—';
   const number = value => value === null || value === undefined || String(value).trim() === '' || !Number.isFinite(Number(value)) ? null : Number(value);
   const prayerYearCache = new Map();
-  function hijriDateLabel(date = new Date()) {
-    const options = { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuala_Lumpur' };
-    try { return new Intl.DateTimeFormat('ms-MY-u-ca-islamic-umalqura', options).format(date).replace(/\s*(?:AH|H)$/i, '') + 'H'; }
-    catch { return new Intl.DateTimeFormat('ms-MY-u-ca-islamic', options).format(date).replace(/\s*(?:AH|H)$/i, '') + 'H'; }
+  const hijriMonths = ['Muharam', 'Safar', 'Rabiulawal', 'Rabiulakhir', 'Jamadilawal', 'Jamadilakhir', 'Rejab', 'Syaaban', 'Ramadan', 'Syawal', 'Zulkaedah', 'Zulhijjah'];
+  function formatJAKIMHijri(value) {
+    if (value && typeof value === 'object') value = value.hijri || value.date || value.value || '';
+    const text = String(value || '').trim();
+    let parts = text.match(/^([0-9]{4})[-/]([0-9]{1,2})[-/]([0-9]{1,2})$/);
+    if (parts) return `${Number(parts[3])} ${hijriMonths[Number(parts[2]) - 1] || ''} ${parts[1]}H`.trim();
+    parts = text.match(/^([0-9]{1,2})[-/]([0-9]{1,2})[-/]([0-9]{4})$/);
+    if (parts) return `${Number(parts[1])} ${hijriMonths[Number(parts[2]) - 1] || ''} ${parts[3]}H`.trim();
+    const aliases = [
+      ['muharram', 'Muharam'], ['safar', 'Safar'], ['rabi al-awwal', 'Rabiulawal'],
+      ['rabi al-thani', 'Rabiulakhir'], ['jumada al-awwal', 'Jamadilawal'],
+      ['jumada al-thani', 'Jamadilakhir'], ['rajab', 'Rejab'], ['sha’ban', 'Syaaban'],
+      ['shaban', 'Syaaban'], ['ramadan', 'Ramadan'], ['shawwal', 'Syawal'],
+      ['dhu al-qi’dah', 'Zulkaedah'], ['dhu al-hijjah', 'Zulhijjah']
+    ];
+    const lower = text.toLocaleLowerCase();
+    const day = text.match(/(^|[^0-9])([0-9]{1,2})(?=[^0-9])/);
+    const year = text.match(/(14[0-9]{2})/);
+    if (day && year) for (const [alias, malay] of aliases) if (lower.includes(alias)) return `${Number(day[2])} ${malay} ${year[1]}H`;
+    return '';
   }
-
+  async function hijriDateLabel(date = new Date()) {
+    const iso = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kuala_Lumpur', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
+    try {
+      const table = await loadPrayerYear(prayerZone, Number(iso.slice(0, 4))), dateIndex = table.fields.indexOf('date'), hijriIndex = table.fields.indexOf('hijri');
+      const row = table.days.find(item => String(item[dateIndex] || '').slice(0, 10) === iso);
+      const official = hijriIndex >= 0 && row ? formatJAKIMHijri(row[hijriIndex]) : '';
+      if (official) return official;
+    } catch (error) { console.info('Takwim Hijrah JAKIM tidak dapat dimuatkan.', error); }
+    try {
+      const options = { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuala_Lumpur' };
+      const formatter = new Intl.DateTimeFormat('ms-MY-u-ca-islamic-umalqura', options);
+      if (formatter.resolvedOptions().calendar.includes('islamic')) return formatter.format(date).replace(/\\s*(?:AH|H)$/i, '') + 'H';
+    } catch {}
+    return 'Tarikh Hijrah tidak tersedia';
+  }
   function renderWeatherDay(weather, index, detail = false) {
     const date = weather.daily.time[index], [condition, symbol] = weatherDescription(Number(weather.daily.weather_code[index]));
     const high = Math.round(weather.daily.temperature_2m_max[index]), low = Math.round(weather.daily.temperature_2m_min[index]);
