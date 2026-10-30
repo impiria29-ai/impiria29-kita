@@ -9,7 +9,7 @@ Frontend login menggunakan Supabase Auth dan publishable key. Tiada secret key a
 3. Buka fail `schema.sql` dalam folder `supabase`, salin semua kandungan dan tampal ke editor.
 4. Tekan **Run** sekali. Pastikan Supabase menunjukkan `Success`; jika ada ralat, jangan teruskan ke pendaftaran penduduk dahulu.
 
-Skema menyediakan profil akaun, kelulusan penduduk, snapshot data komuniti, hebahan dan undi satu bagi setiap rumah. Penduduk hanya menerima data yang dibenarkan untuk rumah masing-masing; AJK boleh melihat baki keseluruhan tanpa membaca transaksi; Bendahari boleh mengurus kewangan tetapi bukan Tetapan; admin ialah superuser. Pilihan individu dalam undian tidak boleh dibaca terus. Tarikh lahir keluarga kekal sulit kecuali ahli keluarga memilih untuk berkongsi ucapan; paparan umum hanya memberi nama serta hari/bulan.
+Skema menyediakan profil akaun, kelulusan penduduk, snapshot data komuniti, hebahan dan undi satu bagi setiap rumah. Penduduk hanya menerima data yang dibenarkan untuk rumah masing-masing; AJK boleh melihat transaksi kewangan tetapi tidak boleh mengubahnya; Bendahari boleh mengurus kewangan tetapi bukan Tetapan; admin ialah superuser. Pilihan individu dalam undian tidak boleh dibaca terus. Tarikh lahir keluarga kekal sulit kecuali ahli keluarga memilih untuk berkongsi ucapan; paparan umum hanya memberi nama serta hari/bulan.
 
 ## 2. Tetapan log masuk
 
@@ -77,3 +77,9 @@ Migration kehadiran ini juga mengaktifkan halaman Tetapan Sistem (zon SGR01/SGR0
 ## 4. Aktifkan peranan Bendahari pada projek sedia ada
 
 Selepas aplikasi diterbitkan, buka **SQL Editor → New query** di Supabase. Salin dan jalankan kandungan `migrations/20261030_bendahari_finance_role.sql`. Selepas Supabase memaparkan `Success`, admin boleh membuka **Senarai pengguna**, menukar peranan akaun yang diluluskan kepada **Bendahari**, kemudian tekan **Simpan perubahan**. Bendahari boleh mengurus transaksi kewangan tetapi tidak boleh membuka Tetapan, log perubahan atau senarai akaun. Jangan jalankan migration ini sebelum projek menggunakan skema komuniti.
+
+## Aset, liabiliti dan paparan kewangan AJK
+
+Selepas migration Bendahari dipasang, jalankan `migrations/20261030_finance_assets_readonly_ajk.sql` di **SQL Editor → New query**. Migration ini membenarkan AJK melihat transaksi pendapatan/perbelanjaan dalam halaman Kewangan, tanpa butang tambah, edit atau padam. Hanya admin dan Bendahari boleh mengurus transaksi serta melihat rekod aset dan liabiliti.
+
+Dalam borang **Rekod transaksi**, pilih jenis **Aset** atau **Liabiliti**, kategori dan jumlah pada tarikh rekod. Kedudukan aset/liabiliti ialah nilai pada tarikh tersebut, bukan aliran tunai. Untuk merekod baki bank, pilih **Aset Semasa — Tunai di Bank** dan gunakan nama akaun yang sama apabila mengemas kini. Kad **Baki dalam bank** mengambil rekod terkini bagi setiap akaun bank; sebelum ada rekod itu, ia mengira pendapatan ditolak perbelanjaan.
