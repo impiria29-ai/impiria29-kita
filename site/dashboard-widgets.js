@@ -243,16 +243,22 @@
   async function initPrayerMonthOptions() {
     const select = $('#prayerMonthSelect'), hijriSelect = $('#prayerHijriMonthSelect'), mode = $('#prayerCalendarMode');
     if (!select) return;
-    if (!select.dataset.ready) {
-      const [year, month] = malaysiaDate().split('-').map(Number), current = new Date(year, month - 1, 1);
-      for (let offset = -2; offset <= 10; offset++) {
+    const today = malaysiaDate(), currentMonth = today.slice(0, 7);
+    if (select.dataset.window !== currentMonth) {
+      const [year, month] = currentMonth.split('-').map(Number), current = new Date(year, month - 1, 1);
+      select.innerHTML = '';
+      for (let offset = 0; offset < 12; offset++) {
         const date = new Date(current.getFullYear(), current.getMonth() + offset, 1), value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         const label = date.toLocaleDateString('ms-MY', { month: 'long', year: 'numeric', timeZone: 'Asia/Kuala_Lumpur' });
         select.add(new Option(label, value));
       }
-      select.value = `${year}-${String(month).padStart(2, '0')}`;
+      select.value = currentMonth;
       select.dataset.ready = 'true';
+      select.dataset.window = currentMonth;
+    }
+    if (!select.dataset.listenerReady) {
       select.addEventListener('change', () => { if (mode?.value !== 'hijri') window.loadPrayerMonth(); });
+      select.dataset.listenerReady = 'true';
     }
     if (mode && !mode.dataset.ready) {
       mode.addEventListener('change', async () => {
@@ -264,9 +270,9 @@
       });
       mode.dataset.ready = 'true';
     }
-    if (hijriSelect && !hijriSelect.dataset.ready) {
+    if (hijriSelect && !hijriSelect.dataset.listenerReady) {
       hijriSelect.addEventListener('change', () => window.loadPrayerMonth());
-      hijriSelect.dataset.ready = 'true';
+      hijriSelect.dataset.listenerReady = 'true';
     }
     const printButton = document.querySelector('[data-print-prayer-month]');
     if (printButton && !printButton.dataset.ready) {
@@ -306,27 +312,31 @@
   }
   async function populateHijriMonthOptions() {
     const select = $('#prayerHijriMonthSelect');
-    if (!select || (select.dataset.ready && select.options.length)) return;
+    const today = malaysiaDate(), currentMonth = today.slice(0, 7);
+    if (!select || (select.dataset.window === currentMonth && select.options.length)) return;
     select.innerHTML = '<option value="">Memuatkan bulan Hijrah…</option>';
-    const currentYear = Number(malaysiaDate().slice(0, 4));
+    const currentYear = Number(today.slice(0, 4));
     const tables = await loadGregorianYears([currentYear, currentYear + 1]);
     const choices = new Map();
     let currentChoice = '';
     for (const { table } of tables) {
       const dateIndex = table.fields.indexOf('date'), hijriIndex = table.fields.indexOf('hijri');
-      if (hijriIndex < 0) continue;
+      if (dateIndex < 0 || hijriIndex < 0) continue;
       for (const row of table.days) {
+        const gregorianDate = String(row[dateIndex] || '').slice(0, 10);
+        if (gregorianDate < today) continue;
         const parts = parsedHijriParts(row[hijriIndex]);
         if (!parts) continue;
         const key = `${parts.year}-${String(parts.month).padStart(2, '0')}`;
         choices.set(key, `${hijriMonths[parts.month - 1]} ${parts.year}H`);
-        if (String(row[dateIndex] || '').slice(0, 10) === malaysiaDate()) currentChoice = key;
+        if (gregorianDate === today) currentChoice = key;
       }
     }
-    select.innerHTML = [...choices].map(([value, label]) => `<option value="${value}">${label}</option>`).join('');
-    if (!choices.size) throw new Error('Bulan Hijrah belum tersedia daripada takwim JAKIM.');
-    select.value = currentChoice || [...choices.keys()].at(-1);
-    select.dataset.ready = 'true';
+    const upcoming = [...choices].slice(0, 12);
+    select.innerHTML = upcoming.map(([value, label]) => `<option value="${value}">${label}</option>`).join('');
+    if (!upcoming.length) throw new Error('Bulan Hijrah akan datang belum tersedia daripada takwim JAKIM.');
+    select.value = upcoming.some(([value]) => value === currentChoice) ? currentChoice : upcoming[0][0];
+    select.dataset.window = currentMonth;
   }
   async function loadHijriMonthRows(year, month) {
     const approximateGregorianYear = Math.floor(year * 0.97 + 622);
