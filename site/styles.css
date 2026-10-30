@@ -475,3 +475,7 @@ body.resident-mode .nav-link[data-page="kewangan"],body.resident-mode .nav-link[
 /* Ringkasan: sapaan mesra dan banner pengumuman boleh ditekan */
 .hero-card{display:block;color:inherit;text-decoration:none;cursor:pointer}.hero-card:focus-visible{outline:3px solid #588c70;outline-offset:3px}.announcement-slide{padding-right:35px}
 @media(max-width:700px){.hero-card{min-height:210px;height:auto}.hero-card .hero-copy{max-width:100%}.announcement-slide{padding-right:0}.announcement-slide h2,.announcement-slide p{max-width:78%}.announcement-slide-count{right:5px}.welcome-copy .subhead{line-height:1.45}}
+
+/* Carta sungai JPS terbenam dan tindakan arkib sesi AJK */
+.river-embed-wrap{width:100%;height:460px;overflow:hidden;border:1px solid var(--line);border-radius:13px;background:#fff}.river-embed{width:100%;height:100%;border:0;background:#fff}.committee-history-actions{display:flex;justify-content:flex-end;padding:12px 0 0}.committee-history-actions .small-action{font-size:11px;padding:7px 10px}.poll-selected-label{display:block;margin-top:4px;color:#47735d;font-size:10px;font-weight:700}.poll-option.chosen .poll-option-line>span:first-child{font-weight:700;color:#234f3d}
+@media(max-width:700px){.river-embed-wrap{height:390px}.committee-history-actions{justify-content:stretch}.committee-history-actions .small-action{width:100%;min-height:40px}}
