@@ -423,7 +423,9 @@ begin
 end;
 $$;
 
-create or replace function public.set_event_attendance(p_event_id text, p_attending boolean)
+drop function if exists public.set_event_attendance(boolean,text);
+ drop function if exists public.set_event_attendance(text,boolean);
+create function public.set_event_attendance(p_event_id text, p_attending boolean)
 returns void
 language plpgsql security definer set search_path = public, auth
 as $$
