@@ -37,6 +37,8 @@
    await addEventAttendance(snapshot);
    await addPublicBirthdays(snapshot);
    await loadCommunitySettings();
+   const loginAuditKey='community-login-audit:'+session.access_token;
+   if(!sessionStorage.getItem(loginAuditKey)){const {error:auditError}=await client.rpc('record_member_login');if(!auditError)sessionStorage.setItem(loginAuditKey,'1');else console.warn('Log masuk tidak dapat direkodkan:',auditError)}
    window.activateCommunitySession({client,session,profile,snapshot});
    document.documentElement.classList.remove('auth-configured');
    $('#logoutButton').classList.remove('hidden');$('#logoutButton').onclick=async e=>{let restore=window.beginAppButtonBusy(e.currentTarget,'Log keluar…');try{await client.auth.signOut();location.reload()}finally{restore?.()}};
