@@ -271,11 +271,22 @@
     const printButton = document.querySelector('[data-print-prayer-month]');
     if (printButton && !printButton.dataset.ready) {
       printButton.addEventListener('click', () => {
-        const clean = () => document.body.classList.remove('print-prayer-month');
+        const media = window.matchMedia?.('print');
+        const clean = () => {
+          document.body.classList.remove('print-prayer-month');
+          window.removeEventListener('focus', onFocus);
+          document.removeEventListener('visibilitychange', onVisibility);
+          media?.removeEventListener?.('change', onMediaChange);
+        };
+        const onFocus = () => { if (!media?.matches) clean(); };
+        const onVisibility = () => { if (document.visibilityState === 'visible' && !media?.matches) clean(); };
+        const onMediaChange = event => { if (!event.matches) clean(); };
         document.body.classList.add('print-prayer-month');
         window.addEventListener('afterprint', clean, { once: true });
-        window.print();
-        setTimeout(clean, 1200);
+        window.addEventListener('focus', onFocus, { once: true });
+        document.addEventListener('visibilitychange', onVisibility);
+        media?.addEventListener?.('change', onMediaChange);
+        requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
       });
       printButton.dataset.ready = 'true';
     }
