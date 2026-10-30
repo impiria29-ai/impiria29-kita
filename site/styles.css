@@ -508,9 +508,9 @@ body.resident-mode [data-start-committee-session],body.resident-mode [data-undo-
 .prayer-print-page-pattern{display:none}
 @media print{body.print-prayer-month #page-solat>.prayer-print-page-pattern{display:block!important;position:fixed!important;inset:0!important;width:100%!important;height:100%!important;z-index:0!important;opacity:.12!important;pointer-events:none!important}.print-prayer-month #page-solat>:not(.prayer-print-page-pattern){position:relative;z-index:1}.print-prayer-month #page-solat .prayer-print-watermark{position:fixed!important;z-index:100!important}.print-prayer-month #page-solat .prayer-print-banner{z-index:2}}
 
-@page{size:A4 landscape;margin:7mm}
+@page{size:A4 portrait;margin:4mm}
 @media print{
-body.print-prayer-month #page-solat{position:relative!important;inset:auto!important;width:100%!important;min-height:0!important;height:auto!important;padding:0 0 8mm!important;margin:0!important;overflow:visible!important;break-inside:avoid!important;background:#fff!important}
+body.print-prayer-month #page-solat{position:fixed!important;inset:0!important;width:auto!important;min-height:0!important;height:auto!important;padding:0 0 8mm!important;margin:0!important;overflow:visible!important;break-inside:avoid!important;background:#fff!important}
 body.print-prayer-month #page-solat .prayer-print-page-pattern{display:none!important}
 body.print-prayer-month #page-solat .page-title-row{display:none!important;visibility:hidden!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important}
 body.print-prayer-month #page-solat .prayer-month-tools{display:none!important}
@@ -526,13 +526,13 @@ body.print-prayer-month #page-solat #prayerMonthHeading{font-size:8pt!important;
 body.print-prayer-month #page-solat #prayerMonthZone{font-size:6pt!important;line-height:1.1!important}
 body.print-prayer-month #page-solat #prayerMonthHijriDate{display:none!important}
 body.print-prayer-month #page-solat .prayer-month-list{display:grid!important;max-width:none!important;gap:0!important;margin:0!important;padding:0!important;break-inside:avoid!important}
-body.print-prayer-month #page-solat .prayer-month-day{display:grid!important;grid-template-columns:62px minmax(0,1fr)!important;gap:5px!important;min-height:0!important;margin:0!important;padding:1px 3px!important;border:0!important;border-bottom:.35pt solid #dce4de!important;border-radius:0!important;background:#fff!important;break-inside:avoid!important}
+body.print-prayer-month #page-solat .prayer-month-day{display:grid!important;width:100%!important;grid-template-columns:62px minmax(0,1fr)!important;gap:5px!important;min-height:0!important;margin:0!important;padding:1px 3px!important;border:0!important;border-bottom:.35pt solid #dce4de!important;border-radius:0!important;background:#fff!important;break-inside:avoid!important}
 body.print-prayer-month #page-solat .prayer-calendar-date{display:grid!important;gap:1px!important}
 body.print-prayer-month #page-solat .prayer-calendar-date b{font-size:6pt!important;line-height:1.05!important;color:#18251e!important}
 body.print-prayer-month #page-solat .prayer-calendar-date small{font-size:5.5pt!important;line-height:1.05!important;color:#66746b!important}
-body.print-prayer-month #page-solat .prayer-month-day>div:not(.prayer-calendar-date){display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr))!important;gap:4px!important;align-items:center!important}
-body.print-prayer-month #page-solat .prayer-month-day span{display:flex!important;justify-content:space-between!important;align-items:center!important;gap:2px!important;white-space:nowrap!important;font-size:5.7pt!important;line-height:1.05!important;color:#59675f!important}
-body.print-prayer-month #page-solat .prayer-month-day strong{font-size:6.2pt!important;line-height:1.05!important;color:#16241c!important}
+body.print-prayer-month #page-solat .prayer-month-day>div:not(.prayer-calendar-date){display:grid!important;width:100%!important;min-width:0!important;grid-template-columns:repeat(7,minmax(0,1fr))!important;gap:4px!important;align-items:center!important}
+body.print-prayer-month #page-solat .prayer-month-day span{display:grid!important;justify-items:center!important;align-content:center!important;gap:1px!important;min-width:0!important;white-space:nowrap!important;font-size:6.5pt!important;line-height:1.05!important;color:#59675f!important}
+body.print-prayer-month #page-solat .prayer-month-day strong{font-size:7pt!important;line-height:1.05!important;color:#16241c!important}
 body.print-prayer-month #page-solat .weather-source-note{margin:3px 0 0!important;padding:0!important;font-size:5.5pt!important;line-height:1.1!important;color:#526058!important}
 body.print-prayer-month #page-solat .prayer-print-watermark{position:fixed!important;bottom:0!important;left:0!important;width:100%!important;padding:2px 0!important;border-top:.4pt solid #d8dfda!important;background:#fff!important;font-size:5.5pt!important;line-height:1.1!important;color:#6a756e!important}
 }
