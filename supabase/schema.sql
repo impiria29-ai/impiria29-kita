@@ -128,7 +128,7 @@ begin
   select data into v_old from public.community_state where state_key='impiria29' for update;
   if v_old is null then raise exception 'Data komuniti belum disediakan.'; end if;
   if public.is_finance_manager() and not public.is_admin() and not public.is_ajk() then
-    if jsonb_typeof(p_data->'transactions') <> 'array' then raise exception 'Senarai transaksi tidak sah.'; end if;
+    if coalesce(jsonb_typeof(p_data->'transactions'),'null') <> 'array' then raise exception 'Senarai transaksi tidak sah.'; end if;
     update public.community_state set data=jsonb_set(v_old,'{transactions}',p_data->'transactions',true),updated_by=auth.uid(),updated_at=now() where state_key='impiria29';
     return;
   end if;
