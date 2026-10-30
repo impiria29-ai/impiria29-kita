@@ -58,11 +58,12 @@
       <a class="nav-link" href="#rumah" data-page="rumah"><span class="nav-icon">⌂</span> Direktori Rumah</a>
       <a class="nav-link" href="#undian" data-page="undian"><span class="nav-icon">☑</span> Undian / Polls</a>
       <a class="nav-link" href="#ahli" data-page="ahli"><span class="nav-icon">♙</span> Ahli keluarga</a>
-      <a class="nav-link hidden" id="applicationsNav" href="#permohonan" data-page="permohonan"><span class="nav-icon">☷</span> Permohonan baharu <span class="nav-count hidden" id="pendingApplicationCount">0</span></a>
-      <a class="nav-link hidden" id="usersNav" href="#akaun" data-page="akaun"><span class="nav-icon">♙</span> Senarai pengguna</a>
-      <a class="nav-link" href="#kewangan" data-page="kewangan"><span class="nav-icon">◉</span> Kewangan</a>
       <a class="nav-link" href="#kalendar" data-page="kalendar"><span class="nav-icon">▦</span> Kalendar komuniti</a>
       <p class="nav-label hidden" id="adminNavLabel">PENTADBIR</p>
+      <p class="nav-label hidden" id="staffNavLabel">PENGURUSAN</p>
+      <a class="nav-link hidden" id="applicationsNav" href="#permohonan" data-page="permohonan"><span class="nav-icon">☷</span> Permohonan baharu <span class="nav-count hidden" id="pendingApplicationCount" aria-label="Permohonan baharu menunggu semakan">0</span></a>
+      <a class="nav-link hidden" id="usersNav" href="#akaun" data-page="akaun"><span class="nav-icon">♙</span> Senarai pengguna</a>
+      <a class="nav-link hidden" id="financeNav" href="#kewangan" data-page="kewangan"><span class="nav-icon">◉</span> Kewangan</a>
       <a class="nav-link" href="#log" data-page="log"><span class="nav-icon">◷</span> Log perubahan</a>
     </nav>
     <div class="sidebar-bottom">
@@ -109,7 +110,7 @@
   <dialog id="profileDialog" class="profile-dialog"><form id="profileForm"><div class="modal-head"><div><p class="eyebrow">PROFIL PENGGUNA</p><h2>Kemaskini nama anda</h2></div><button class="close-button" type="button" data-close-profile aria-label="Tutup">×</button></div><label class="profile-name-field">Nama penuh<input id="profileFullName" type="text" maxlength="120" autocomplete="name" required></label><p id="profileFormError" class="profile-form-error" role="alert"></p><div class="modal-actions"><button class="button button-quiet" type="button" data-close-profile>Batal</button><button class="button button-primary" id="saveProfileButton" type="submit">Simpan nama</button></div></form></dialog>
   <dialog id="editDialog"><form id="editForm" method="dialog"><div class="modal-head"><div><p class="eyebrow" id="modalEyebrow">KOMUNITIPRO</p><h2 id="modalTitle">Tambah baharu</h2></div><button class="close-button" type="button" id="closeModal" aria-label="Tutup">×</button></div><div id="modalFields" class="modal-fields"></div><div class="form-error hidden" id="formError" role="alert"></div><div class="modal-actions"><button type="button" class="button button-quiet" id="cancelModal">Batal</button><button class="button button-primary" id="saveModalButton" type="submit">Simpan</button></div></form></dialog>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js?v=20261030as"></script>
+  <script src="app.js?v=20261030at"></script>
   <script src="accounts.js?v=20261030d"></script>
   <script src="dashboard-widgets.js?v=20261030z"></script>
   <script src="auth.js?v=20261030i"></script>
