@@ -556,3 +556,21 @@ body.resident-mode #page-rumah [data-print-residents],body.resident-mode #page-r
 
 .event-row-image{width:54px;height:48px;object-fit:cover;border-radius:8px;flex:none}
 @media(max-width:700px){.event-row-image{width:46px;height:44px}}
+/* Finance summary and report remain visible to AJK; only transaction mutations are withheld. */
+body.ajk-mode #page-kewangan .finance-cards,body.ajk-mode #page-kewangan .finance-report-panel{display:block!important}
+body.ajk-mode #page-kewangan .finance-cards{display:grid!important}
+body.ajk-mode #page-kewangan .finance-report-panel{display:block!important}
+body.ajk-mode #page-kewangan [data-open="transaction"],body.ajk-mode #page-kewangan [data-edit="transaction"],body.ajk-mode #page-kewangan [data-delete="transaction"]{display:none!important}
+.photo-upload-button{background:linear-gradient(135deg,#145343,#24765f);color:#fff;border-color:#145343}
+.photo-upload-button:hover{background:linear-gradient(135deg,#103f34,#1b6652);border-color:#103f34}
+.hero-card{color:#12382e;background:linear-gradient(110deg,#e8f3eb 0%,#d4e8d9 58%,#c7dfce 100%)}
+.hero-tag{color:#355b49}
+.hero-copy h2,.announcement-slide h2{color:#12382e;text-shadow:0 1px 0 rgba(255,255,255,.48)}
+.hero-copy p,.announcement-slide-body{color:#304f40}
+.announcement-slide{max-width:min(68%,700px);padding:12px 15px;border:1px solid rgba(255,255,255,.6);border-radius:13px;background:rgba(250,253,250,.84);box-shadow:0 6px 22px rgba(17,54,39,.1);backdrop-filter:blur(5px)}
+.calendar-day{font:inherit;text-align:left;color:inherit;cursor:pointer}
+.calendar-day:hover:not(.is-empty){border-color:#98bca2;background:#f7fbf7}
+.calendar-day.is-empty{cursor:default;pointer-events:none}
+.calendar-mark.school-holiday{background:#eaf0ff;color:#4b5e92}
+.school-holiday-dot{background:#687db7}
+@media(max-width:700px){.announcement-slide{max-width:100%;padding:10px 12px}.announcement-slide h2,.announcement-slide p{max-width:100%}.finance-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
