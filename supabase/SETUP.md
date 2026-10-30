@@ -60,3 +60,8 @@ Permohonan tanpa e-mel pengesahan hanya berfungsi selepas **Confirm email** dima
 ## 7. Pengurusan senarai akaun
 
 Untuk database sedia ada, jalankan kandungan `supabase/migrations/20261030_account_management.sql` di **SQL Editor → New query**. Menu **Senarai pengguna** kemudian tersedia untuk admin dan AJK. Mereka boleh mengemas kini nama, telefon, rumah dan status kelulusan. Hanya admin boleh menukar peranan. Memadam akaun memadam akaun log masuk dan profilnya secara kekal; rekod isi rumah dikekalkan. Admin terakhir serta akaun yang sedang digunakan dilindungi daripada pemadaman.
+
+
+## 8. Baki tabung pada Ringkasan penduduk
+
+Untuk database sedia ada, jalankan `supabase/migrations/20261030_dashboard_public_summary.sql` di **SQL Editor → New query**. Fungsi ini hanya memberikan jumlah baki kepada ahli yang diluluskan; ia tidak memberikan senarai transaksi kepada penduduk. Selepas migration berjaya, log keluar dan masuk semula.
