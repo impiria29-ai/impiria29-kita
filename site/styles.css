@@ -504,3 +504,6 @@ body.resident-mode [data-start-committee-session],body.resident-mode [data-undo-
 @media print and (max-width:600px){.prayer-print-banner{gap:8px;padding:13px}.prayer-print-brand{gap:8px}.prayer-print-brand img{width:42px;height:48px}.prayer-print-brand h2{font-size:14pt}.prayer-print-brand span{font-size:6.5pt}.prayer-print-brand small{font-size:7.5pt}.prayer-print-mosque{width:110px;height:70px}}
 
 @media(max-width:700px){.prayer-month-day>div:not(.prayer-calendar-date){grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.prayer-month-day span{font-size:8px}.prayer-month-day strong{font-size:10px}}
+
+.prayer-print-page-pattern{display:none}
+@media print{body.print-prayer-month #page-solat>.prayer-print-page-pattern{display:block!important;position:fixed!important;inset:0!important;width:100%!important;height:100%!important;z-index:0!important;opacity:.12!important;pointer-events:none!important}.print-prayer-month #page-solat>:not(.prayer-print-page-pattern){position:relative;z-index:1}.print-prayer-month #page-solat .prayer-print-watermark{position:fixed!important;z-index:100!important}.print-prayer-month #page-solat .prayer-print-banner{z-index:2}}
