@@ -38,14 +38,55 @@
     }
   }
 
+  async function requestJson(url, timeoutMs = 9000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetch(url, { cache: 'no-store', signal: controller.signal });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return await response.json();
+    } finally { clearTimeout(timer); }
+  }
+
+  function malaysiaDate() {
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kuala_Lumpur', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+    const value = Object.fromEntries(parts.map(part => [part.type, part.value]));
+    return `${value.year}-${value.month}-${value.day}`;
+  }
+
+  async function loadPrayerFromOpenData() {
+    const index = await requestJson('https://sajadah.org/api/v1/regions.json');
+    const region = (index.regions || []).find(item => String(item.zone || '').toUpperCase() === 'SGR01');
+    if (!region?.id) throw new Error('Zon SGR01 tidak dijumpai.');
+    const year = Number(malaysiaDate().slice(0, 4));
+    const table = await requestJson(`https://sajadah.org/api/v1/times/my/${encodeURIComponent(region.id)}/${year}.json`);
+    const fields = table.fields || [];
+    const today = (table.days || []).find(row => row[fields.indexOf('date')] === malaysiaDate());
+    if (!today) throw new Error('Jadual untuk hari ini belum tersedia.');
+    const value = name => {
+      const index = fields.indexOf(name);
+      return index >= 0 ? today[index] : '';
+    };
+    return { fajr: value('fajr'), dhuhr: value('dhuhr'), asr: value('asr'), maghrib: value('maghrib'), isha: value('isha') };
+  }
+
+  async function loadPrayerFromSolatMy() {
+    const result = await requestJson(prayerUrl);
+    const day = result.prayerTime?.[0] || result.data?.prayerTime?.[0] || result.data?.[0] || result.data || result;
+    return { fajr: day.fajr, dhuhr: day.dhuhr, asr: day.asr, maghrib: day.maghrib, isha: day.isha };
+  }
+
   async function loadPrayerTimes() {
     const next = $('#nextPrayer'), times = $('#prayerTimes');
     try {
-      const response = await fetch(prayerUrl, { cache: 'no-store' });
-      if (!response.ok) throw new Error('Waktu solat tidak tersedia.');
-      const result = await response.json();
-      const day = result.prayerTime?.[0] || result.data?.prayerTime?.[0] || result.data?.[0] || result;
+      let day;
+      try { day = await loadPrayerFromOpenData(); }
+      catch (primaryError) {
+        console.warn('Sumber jadual terbuka waktu solat tidak tersedia, cuba sumber sandaran.', primaryError);
+        day = await loadPrayerFromSolatMy();
+      }
       const prayers = [['Subuh', day.fajr], ['Zohor', day.dhuhr], ['Asar', day.asr], ['Maghrib', day.maghrib], ['Isyak', day.isha]];
+      if (prayers.some(([, time]) => !displayTime(time).match(/^\d{1,2}:\d{2}$/))) throw new Error('Format waktu solat tidak lengkap.');
       const clock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kuala_Lumpur', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date());
       const [hourNow, minutePart] = clock.split(':').map(Number);
       const minuteNow = hourNow * 60 + minutePart;
@@ -56,10 +97,11 @@
       const nextTime = upcoming || prayers[0];
       next.innerHTML = `Seterusnya: <b>${nextTime[0]} · ${displayTime(nextTime[1])}${upcoming ? '' : ' esok'}</b>`;
       times.innerHTML = prayers.map(([name, time]) => `<div><span>${name}</span><b>${displayTime(time)}</b></div>`).join('');
-      $('#prayerUpdated').textContent = 'Jadual e-Solat · Zon SGR01';
-    } catch {
+      $('#prayerUpdated').textContent = 'Jadual e-Solat JAKIM · Zon SGR01';
+    } catch (error) {
+      console.error('Gagal memuatkan waktu solat Shah Alam:', error);
       next.textContent = 'Waktu solat tidak dapat dimuatkan.';
-      times.innerHTML = '<span class="widget-muted">Sila cuba lagi kemudian.</span>';
+      times.innerHTML = '<span class="widget-muted">Sumber jadual sedang tidak tersedia. Cuba muat semula sebentar lagi.</span>';
     }
   }
 
