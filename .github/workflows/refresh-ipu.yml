@@ -25,10 +25,10 @@ jobs:
           const stations = Array.isArray(payload.stations) ? payload.stations : [];
           const station = stations.find(item =>
             String(item.id || '').toUpperCase() === 'MCAQM001' ||
-            /JOHAN\\s+SETIA/i.test(`${item.name || ''} ${item.fullName || ''}`)
+            /JOHAN\s+SETIA/i.test(`${item.name || ''} ${item.fullName || ''}`)
           );
           const api = Number(station?.api);
-          if (!station || !Number.isFinite(api) || api < 0 || !station.observedAt) {
+          if (!station || station.api === null || station.api === undefined || !Number.isFinite(api) || api < 0 || !station.observedAt) {
             throw new Error('No valid current IPU reading for Johan Setia MCAQM001.');
           }
           const snapshot = {
@@ -39,7 +39,7 @@ jobs:
             source: 'Department of Environment Malaysia via Haze Monitor',
             sourceUrl: 'https://hazemonitor.com/station/johan-setia'
           };
-          fs.writeFileSync('site/ipu.json', JSON.stringify(snapshot, null, 2) + '\\n');
+          fs.writeFileSync('site/ipu.json', JSON.stringify(snapshot, null, 2) + '\n');
           })().catch(error => { console.error(error); process.exitCode = 1; });
           NODE
       - name: Commit changed reading
