@@ -545,3 +545,7 @@ body.print-prayer-month #page-solat .prayer-print-watermark{position:fixed!impor
 .finance-chart-wrap{height:220px!important;min-width:0!important;overflow:hidden!important}
 .finance-chart-wrap canvas{display:block!important;width:100%!important;height:220px!important;min-width:0!important;max-width:100%!important}
 .finance-report-controls label.report-signoff-input{flex:1 1 190px;min-width:180px}
+
+.resident-update-note{display:grid;gap:10px;margin:14px 0;padding:13px;border:1px solid #dcebe0;border-radius:12px;background:#f2f8f3;color:#496357;font-size:12px;line-height:1.6}.resident-update-note .button{justify-self:start}.profile{cursor:pointer;border-radius:9px}.profile:hover{background:#f7f9f7}.profile-dialog{width:min(420px,calc(100% - 28px));padding:0;border:1px solid #e4ebe6;border-radius:18px;box-shadow:0 24px 90px rgba(19,40,32,.25);color:var(--ink)}.profile-dialog form{padding:22px}.profile-name-field{display:grid;gap:7px;margin:18px 0 8px;color:#607067;font-size:11px;font-weight:700}.profile-name-field input{height:42px;border:1px solid var(--line);border-radius:9px;padding:0 11px;color:var(--ink);font-size:13px}.profile-name-field input:focus{outline:2px solid #dcebe0;border-color:#98b6a1}.profile-form-error{min-height:17px;margin:0 0 8px;color:#be4f49;font-size:11px}
+
+body.resident-mode #page-rumah [data-print-residents],body.resident-mode #page-rumah [data-export-residents],body.bendahari-mode #page-rumah [data-print-residents],body.bendahari-mode #page-rumah [data-export-residents]{display:none!important}
