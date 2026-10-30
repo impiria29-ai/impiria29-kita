@@ -114,7 +114,10 @@
     window.COMMUNITY_DATA_FINANCE_SUMMARY = error ? null : data;
     const amount = Number(data?.balance);
     const target = $('#statBalance');
-    if (target) target.textContent = !error && Number.isFinite(amount) ? `RM ${amount.toLocaleString('ms-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—';
+    const total = $('#paymentBalanceTotal');
+    const displayAmount = !error && Number.isFinite(amount) ? `RM ${amount.toLocaleString('ms-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—';
+    if (target) target.textContent = displayAmount;
+    if (total) total.textContent = displayAmount;
   };
 
   loadWeather();
