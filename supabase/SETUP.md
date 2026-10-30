@@ -13,13 +13,13 @@ Skema menyediakan profil akaun, kelulusan penduduk, snapshot data komuniti, heba
 
 ## 2. Tetapan log masuk
 
-Dalam Supabase, buka **Authentication → URL Configuration**. Selepas tapak diterbitkan, tetapkan **Site URL** kepada alamat HTTPS app dan tambah alamat itu di **Redirect URLs**. Gunakan kaedah e-mel/kata laluan. Tetapan pengesahan e-mel boleh dikekalkan; jika dihidupkan, pengguna perlu sahkan e-mel sebelum log masuk.
+Dalam Supabase, buka **Authentication → URL Configuration**. Selepas tapak diterbitkan, tetapkan **Site URL** kepada alamat HTTPS app dan tambah alamat itu di **Redirect URLs**. Gunakan kaedah e-mel/kata laluan. Untuk aliran permohonan tanpa e-mel pengesahan, buka **Authentication → Sign In / Providers → Email** dan matikan **Confirm email**. Supabase akan menandakan alamat e-mel sebagai disahkan secara automatik; AJK/admin perlu mengesahkan nama, telefon dan rumah secara berasingan sebelum meluluskan akaun. [Dokumentasi Supabase](https://supabase.com/docs/guides/auth/general-configuration).
 
 ## 3. Jadikan akaun anda admin pertama
 
 1. Terbitkan folder app ke hosting HTTPS atau jalankan di komputer untuk ujian.
 2. Di app, pilih **Mohon akses penduduk** dan daftar akaun anda dengan e-mel yang akan dijadikan admin serta nombor rumah sebenar.
-3. Jika pengesahan e-mel dihidupkan, sahkan pautan e-mel dan log masuk sekali supaya profil diwujudkan.
+3. Log masuk sekali supaya profil diwujudkan. Jika **Confirm email** dimatikan, tiada pautan e-mel diperlukan.
 4. Dalam SQL Editor Supabase, tukar `alamat@email-anda` dalam arahan di bawah kepada e-mel akaun itu dan jalankan:
 
 ```sql
@@ -46,3 +46,13 @@ Penduduk daftar dalam app; mereka belum dapat melihat data sehingga diluluskan. 
 ## 5. Aktifkan ucapan hari lahir penduduk
 
 Untuk database yang sudah digunakan, buka **SQL Editor → New query**, salin kandungan fail `supabase/migrations/20261030_public_birthdays.sql`, kemudian tekan **Run**. Ini mengaktifkan senarai ucapan yang dipersetujui tanpa memaparkan tahun lahir. Jika binaan database baharu, fungsi ini sudah termasuk dalam `schema.sql`.
+
+
+## 6. Kelulusan permohonan di frontend
+
+1. Untuk database sedia ada, buka **SQL Editor → New query**.
+2. Jalankan kandungan fail `supabase/migrations/20261030_access_applications.sql`.
+3. Jalankan juga `supabase/migrations/20261030_public_birthdays.sql` jika belum dijalankan.
+4. Selepas itu, AJK/admin yang log masuk akan melihat menu **Permohonan baharu**. Senarai dikemas kini setiap 45 saat. AJK/admin pilih rumah yang disahkan dan tekan **Luluskan akaun**. Penduduk hanya boleh log masuk selepas diluluskan.
+
+Permohonan tanpa e-mel pengesahan hanya berfungsi selepas **Confirm email** dimatikan dalam tetapan Email provider (rujuk bahagian 2). Pemberitahuan permohonan muncul dalam app untuk AJK/admin yang sedang log masuk; ia bukan notifikasi push apabila app ditutup.
