@@ -6,10 +6,10 @@
  const signupHouse=$('#authSignupForm [name="house_number"]');
  for(let n=1;n<=43;n++){let option=document.createElement('option');option.value=String(n);option.textContent=`Rumah ${String(n).padStart(2,'0')}`;signupHouse.append(option)}
  function say(text,error=false){message.textContent=text;message.classList.toggle('error',error)}
- function appRedirectUrl(){return new URL('./',window.location.href).toString()}
  const callbackErrorParams=new URLSearchParams(window.location.hash.replace(/^#/,'')||'');
- if(callbackErrorParams.get('error_code')==='otp_expired'||callbackErrorParams.get('error')==='access_denied')say('Pautan pengesahan telah luput atau tidak sah. Masukkan e-mel anda dan tekan “Hantar semula” untuk menerima pautan baharu.',true)
- function switchForm(which){$('#authLoginForm').classList.toggle('hidden',which!=='login');$('#authSignupForm').classList.toggle('hidden',which!=='signup');say('')}
+ if(callbackErrorParams.get('error_code')==='otp_expired'||callbackErrorParams.get('error')==='access_denied')say('Pautan lama tidak sah. Anda boleh log masuk selepas akaun diluluskan oleh AJK atau admin.',true)
+ function switchForm(which){$('#authLoginForm').classList.toggle('hidden',which!=='login');$('#authSignupForm').classList.toggle('hidden',which!=='signup');$('#authRequestSuccess').classList.add('hidden');$('#authTitle').textContent='Impiria29 Kita';$('#authIntro').textContent='Log masuk untuk melihat ruang komuniti penduduk.';message.classList.remove('hidden');say('');history.replaceState(null,'',location.pathname+location.search)}
+ function showRequestSubmitted(emailConfirmationStillOn){$('#authLoginForm').classList.add('hidden');$('#authSignupForm').classList.add('hidden');$('#authRequestSuccess').classList.remove('hidden');message.classList.add('hidden');$('#authSignOut').classList.add('hidden');$('#authTitle').textContent='Permohonan dihantar';$('#authIntro').textContent='Terima kasih kerana mendaftar akses penduduk.';$('#requestSuccessCopy').textContent=emailConfirmationStillOn?'Permohonan direkodkan, tetapi tetapan Supabase masih meminta pengesahan e-mel. Admin perlu mematikan Confirm email supaya pengguna tidak menerima e-mel dan boleh log masuk selepas kelulusan.':'AJK atau admin akan menyemak permohonan anda. Tiada e-mel pengesahan dihantar. Anda boleh log masuk selepas akaun diluluskan.';history.replaceState(null,'',location.pathname+location.search+'#permohonan-dihantar')}
  async function addPollTallies(snapshot){
    for(const poll of (snapshot?.polls||[])){let {data,error}=await client.rpc('get_poll_tallies',{p_poll_id:poll.id});if(!error&&Array.isArray(data)){poll.remoteCounts=poll.options.map((_,i)=>Number(data.find(x=>Number(x.option_index)===i)?.vote_count||0));poll.remoteChoice=data.find(x=>x.my_choice!==null&&x.my_choice!==undefined)?.my_choice??null}}
    return snapshot;
@@ -50,25 +50,19 @@
    let form=e.currentTarget,f=new FormData(form),phone=String(f.get('phone')).trim();
    if(!phone){say('Nombor telefon wajib diisi.',true);return}
    let button=form.querySelector('[type="submit"]'),restore=window.beginAppButtonBusy(button,'Menghantar permohonan…');if(!restore)return;
-   signupPending=true;say('');let completed=false;
+   signupPending=true;say('');
    try{
-     let {data,error}=await client.auth.signUp({email:String(f.get('email')).trim(),password:String(f.get('password')),options:{data:{full_name:String(f.get('full_name')).trim(),phone,house_number:String(f.get('house_number'))},emailRedirectTo:appRedirectUrl()}});
+     let {data,error}=await client.auth.signUp({email:String(f.get('email')).trim(),password:String(f.get('password')),options:{data:{full_name:String(f.get('full_name')).trim(),phone,house_number:String(f.get('house_number'))}}});
      if(error){say(error.message,true);return}
-     completed=true;
-     if(data.session)await activate(data.session);else say('Permohonan diterima. Semak e-mel untuk pengesahan, kemudian tunggu kelulusan AJK.');
+     if(data.user?.identities?.length===0){say('E-mel ini mungkin sudah mempunyai akaun. Cuba log masuk atau hubungi admin taman.',true);return}
+     if(data.session){let {error:signOutError}=await client.auth.signOut();if(signOutError)console.warn('Sesi permohonan kekal aktif; akses masih dikawal oleh status kelulusan.')}
+     form.reset();
+     showRequestSubmitted(!data.session);
    }catch(error){say(error?.message||'Permohonan tidak dapat dihantar. Cuba lagi sebentar nanti.',true)}
-   finally{signupPending=false;restore();if(completed){button.disabled=true;button.textContent='Permohonan dihantar';button.setAttribute('aria-disabled','true')}}
- }); let confirmationPending=false;
- $('#resendConfirmationButton').addEventListener('click',async e=>{
-   if(confirmationPending)return;
-   let button=e.currentTarget,email=String($('#authLoginForm [name="email"]').value||'').trim();
-   if(!email){say('Masukkan e-mel anda di ruangan Log masuk dahulu.',true);return}
-   let restore=window.beginAppButtonBusy(button,'Menghantar pautan…');if(!restore)return;
-   confirmationPending=true;say('');
-   try{let {error}=await client.auth.resend({type:'signup',email,options:{emailRedirectTo:appRedirectUrl()}});if(error){say(error.message,true);return}say('Pautan pengesahan baharu dihantar. Semak e-mel dan folder spam.')}
-   catch(error){say(error?.message||'Pautan tidak dapat dihantar. Cuba lagi sebentar nanti.',true)}
-   finally{confirmationPending=false;restore()}
- }); document.addEventListener('click',e=>{let b=e.target.closest('[data-auth-switch]');if(b)switchForm(b.dataset.authSwitch)});
+   finally{signupPending=false;restore()}
+ });
+ $('#returnToLogin').addEventListener('click',()=>switchForm('login'));
+ document.addEventListener('click',e=>{let b=e.target.closest('[data-auth-switch]');if(b)switchForm(b.dataset.authSwitch)});
  $('#authSignOut').addEventListener('click',async e=>{let restore=window.beginAppButtonBusy(e.currentTarget,'Log keluar…');try{await client.auth.signOut();location.reload()}finally{restore?.()}});
  client.auth.getSession().then(async({data,error})=>{if(error)say('Tidak dapat menyambung ke Supabase: '+error.message,true);else if(data.session){let restore=window.beginAppButtonBusy($('#authLoginForm [type="submit"]'),'Memuatkan komuniti…');try{await activate(data.session)}catch(err){say(err?.message||'Tidak dapat memuatkan komuniti.',true)}finally{restore?.()}}});
  client.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'&&document.documentElement.classList.contains('auth-configured'))say('Anda telah log keluar.')});
