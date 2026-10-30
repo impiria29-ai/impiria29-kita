@@ -176,9 +176,9 @@
       if (!list.innerHTML) throw new Error('Bacaan stesen belum tersedia.');
       updated.textContent = 'Bacaan diambil daripada Public InfoBanjir JPS · semak masa kemas kini pada setiap stesen.';
     } catch (error) {
-      console.info('Bacaan sungai JPS dibuka terus melalui pautan rasmi.', error);
-      list.innerHTML = '<article class="river-station-card"><span class="river-station-mark">〰</span><div><b>SG. KLANG DI KG. LOMBONG</b><small>Sungai Klang · Klang</small></div><a href="https://infobanjirjps.selangor.gov.my/water-level-graph.html?station=872" target="_blank" rel="noopener">Lihat bacaan JPS ↗</a></article>';
-      updated.textContent = 'Bacaan langsung tidak dapat dimuatkan dalam app. Buka graf rasmi JPS untuk bacaan semasa.';
+      console.info('Ringkasan bacaan sungai dibuka dalam carta JPS terbenam.', error);
+      list.innerHTML = '<article class="river-station-card"><span class="river-station-mark">〰</span><div><b>SG. KLANG DI KG. LOMBONG</b><small>Sungai Klang · Klang</small></div><span class="river-status normal">Bacaan dipaparkan dalam carta di bawah</span></article>';
+      updated.textContent = 'Ringkasan teks tidak tersedia ketika ini. Carta JPS masih dipaparkan di halaman ini.';
     } finally { clearTimeout(timeout); }
   }
 
