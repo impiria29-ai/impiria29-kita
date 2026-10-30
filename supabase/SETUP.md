@@ -45,14 +45,18 @@ Penduduk daftar dalam app; mereka belum dapat melihat data sehingga diluluskan. 
 
 ## 5. Aktifkan ucapan hari lahir penduduk
 
-Untuk database yang sudah digunakan, buka **SQL Editor → New query**, salin kandungan fail `supabase/migrations/20261030_public_birthdays.sql`, kemudian tekan **Run**. Ini mengaktifkan senarai ucapan yang dipersetujui tanpa memaparkan tahun lahir. Jika binaan database baharu, fungsi ini sudah termasuk dalam `schema.sql`.
+Fungsi ucapan hari lahir diaktifkan bersama fungsi permohonan melalui migration gabungan di bahagian 6. Paparan umum hanya mengembalikan nama, hubungan dan hari/bulan bagi ahli yang memilih untuk berkongsi; tahun lahir tidak dipaparkan.
 
 
 ## 6. Kelulusan permohonan di frontend
 
 1. Untuk database sedia ada, buka **SQL Editor → New query**.
-2. Jalankan kandungan fail `supabase/migrations/20261030_access_applications.sql`.
-3. Jalankan juga `supabase/migrations/20261030_public_birthdays.sql` jika belum dijalankan.
+2. Jalankan kandungan fail `supabase/migrations/20261030_enable_birthdays_and_applications.sql` sekali untuk mengaktifkan fungsi permohonan serta ucapan hari lahir.
 4. Selepas itu, AJK/admin yang log masuk akan melihat menu **Permohonan baharu**. Senarai dikemas kini setiap 45 saat. AJK/admin pilih rumah yang disahkan dan tekan **Luluskan akaun**. Penduduk hanya boleh log masuk selepas diluluskan.
 
 Permohonan tanpa e-mel pengesahan hanya berfungsi selepas **Confirm email** dimatikan dalam tetapan Email provider (rujuk bahagian 2). Pemberitahuan permohonan muncul dalam app untuk AJK/admin yang sedang log masuk; ia bukan notifikasi push apabila app ditutup.
+
+
+## 7. Pengurusan senarai akaun
+
+Untuk database sedia ada, jalankan kandungan `supabase/migrations/20261030_account_management.sql` di **SQL Editor → New query**. Menu **Senarai pengguna** kemudian tersedia untuk admin dan AJK. Mereka boleh mengemas kini nama, telefon, rumah dan status kelulusan. Hanya admin boleh menukar peranan. Memadam akaun memadam akaun log masuk dan profilnya secara kekal; rekod isi rumah dikekalkan. Admin terakhir serta akaun yang sedang digunakan dilindungi daripada pemadaman.
