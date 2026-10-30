@@ -38,9 +38,7 @@
   async function loadWeather() {
     const current = $('#weatherCurrent'), forecast = $('#weatherForecast');
     try {
-      const response = await fetch(weatherUrl, { cache: 'no-store' });
-      if (!response.ok) throw new Error('Cuaca tidak tersedia.');
-      const weather = await response.json();
+      const weather = await requestJson(weatherUrl, 9000);
       const [description, icon] = weatherDescription(Number(weather.current?.weather_code));
       current.innerHTML = `<span class="weather-icon">${icon}</span><b>${Math.round(weather.current?.temperature_2m ?? 0)}°C</b><span>${description}</span>`;
       forecast.innerHTML = (weather.daily?.time || []).slice(0, 3).map((_, index) => renderWeatherDay(weather, index)).join('') || '<p class="widget-muted">Ramalan belum tersedia.</p>';
@@ -170,7 +168,6 @@
       list.innerHTML = '<article class="river-station-card"><span class="river-station-mark">〰</span><div><b>SG. KLANG DI KG. LOMBONG</b><small>Sungai Klang · Klang</small></div><a href="https://infobanjirjps.selangor.gov.my/water-level-graph.html?station=872" target="_blank" rel="noopener">Lihat bacaan JPS ↗</a></article>';
       updated.textContent = 'Bacaan langsung tidak dapat dimuatkan dalam app. Buka graf rasmi JPS untuk bacaan semasa.';
     } finally { clearTimeout(timeout); }
-    }
   }
 
   function malaysiaDate() {
