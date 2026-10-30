@@ -31,9 +31,9 @@
     parts = text.match(/^([0-9]{1,2})[-/]([0-9]{1,2})[-/]([0-9]{4})$/);
     if (parts) return `${Number(parts[1])} ${hijriMonths[Number(parts[2]) - 1] || ''} ${parts[3]}H`.trim();
     const aliases = [
-      ['muharram', 'Muharam'], ['safar', 'Safar'], ['rabi al-awwal', 'Rabiulawal'],
-      ['rabi al-thani', 'Rabiulakhir'], ['jumada al-awwal', 'Jamadilawal'],
-      ['jumada al-thani', 'Jamadilakhir'], ['rajab', 'Rejab'], ['sha’ban', 'Syaaban'],
+      ['muharram', 'Muharam'], ['muharam', 'Muharam'], ['safar', 'Safar'], ['rabi al-awwal', 'Rabiulawal'], ['rabiulawal', 'Rabiulawal'],
+      ['rabi al-thani', 'Rabiulakhir'], ['rabiulakhir', 'Rabiulakhir'], ['jumada al-awwal', 'Jamadilawal'], ['jamadilawal', 'Jamadilawal'],
+      ['jumada al-thani', 'Jamadilakhir'], ['jamadilakhir', 'Jamadilakhir'], ['rajab', 'Rejab'], ['sha’ban', 'Syaaban'],
       ['shaban', 'Syaaban'], ['ramadan', 'Ramadan'], ['shawwal', 'Syawal'],
       ['dhu al-qi’dah', 'Zulkaedah'], ['dhu al-hijjah', 'Zulhijjah']
     ];
@@ -55,7 +55,7 @@
     try {
       const options = { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuala_Lumpur' };
       const formatter = new Intl.DateTimeFormat('ms-MY-u-ca-islamic-umalqura', options);
-      if (formatter.resolvedOptions().calendar.includes('islamic')) return formatter.format(date).replace(/\\s*(?:AH|H)$/i, '') + 'H';
+      if (formatter.resolvedOptions().calendar.includes('islamic')) return formatter.format(date).replace(/\s*(?:AH|H)$/i, '') + 'H';
     } catch {}
     return 'Tarikh Hijrah tidak tersedia';
   }
@@ -281,7 +281,7 @@
     }
   }
   function parsedHijriParts(value) {
-    const label = formatJAKIMHijri(value), match = label.match(/^([0-9]{1,2})\\s+(.+)\\s+(14[0-9]{2})H$/);
+    const label = formatJAKIMHijri(value), match = label.match(/^([0-9]{1,2})\s+(.+)\s+(14[0-9]{2})H$/);
     if (!match) return null;
     const month = hijriMonths.findIndex(name => name.toLocaleLowerCase() === match[2].toLocaleLowerCase()) + 1;
     return month ? { day: Number(match[1]), month, year: Number(match[3]) } : null;
