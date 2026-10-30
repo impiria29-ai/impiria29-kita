@@ -3,6 +3,8 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  repository_dispatch:
+    types: [ipu-updated]
 permissions:
   contents: read
   pages: write
