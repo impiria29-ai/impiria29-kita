@@ -70,3 +70,5 @@ Untuk database sedia ada, jalankan `supabase/migrations/20261030_dashboard_publi
 ## 10. Kehadiran acara bagi setiap akaun
 
 Untuk database sedia ada, jalankan `supabase/migrations/20261030_per_user_event_attendance.sql` di **SQL Editor → New query**. Migration ini menyimpan kehadiran per akaun, mengira jumlah yang hadir, dan tidak mendedahkan senarai nama peserta.
+
+Migration kehadiran ini juga mengaktifkan halaman Tetapan Sistem (zon SGR01/SGR03) yang boleh diubah oleh admin. Selepas SQL berjaya, fungsi kehadiran acara dan tetapan tersedia untuk semua akaun yang dibenarkan.

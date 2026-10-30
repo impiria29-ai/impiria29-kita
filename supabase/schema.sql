@@ -446,3 +446,46 @@ $$;
 
 revoke all on function public.get_event_attendance(text[]), public.set_event_attendance(text,boolean) from public, anon;
 grant execute on function public.get_event_attendance(text[]), public.set_event_attendance(text,boolean) to authenticated;
+
+-- Tetapan komuniti yang boleh diubah oleh admin dan dibaca oleh ahli diluluskan.
+create table if not exists public.community_settings (
+  setting_key text primary key default 'impiria29' check (setting_key = 'impiria29'),
+  prayer_zone text not null default 'SGR01' check (prayer_zone in ('SGR01','SGR03')),
+  updated_by uuid references auth.users(id) on delete set null,
+  updated_at timestamptz not null default now()
+);
+insert into public.community_settings(setting_key,prayer_zone)
+values ('impiria29','SGR01') on conflict (setting_key) do nothing;
+alter table public.community_settings enable row level security;
+revoke all on public.community_settings from anon, authenticated;
+
+create or replace function public.get_community_settings()
+returns table(prayer_zone text)
+language plpgsql stable security definer set search_path = public, auth
+as $$
+begin
+  if not public.is_approved_member() then raise exception 'Akaun belum diluluskan.'; end if;
+  return query select s.prayer_zone from public.community_settings s where s.setting_key='impiria29';
+end;
+$$;
+
+create or replace function public.update_community_settings(p_prayer_zone text)
+returns table(prayer_zone text)
+language plpgsql security definer set search_path = public, auth
+as $$
+begin
+  if not public.is_admin() then raise exception 'Hanya admin boleh mengubah tetapan sistem.'; end if;
+  if p_prayer_zone is null or p_prayer_zone not in ('SGR01','SGR03') then raise exception 'Zon waktu solat tidak sah.'; end if;
+  return query
+    insert into public.community_settings(setting_key,prayer_zone,updated_by,updated_at)
+    values ('impiria29',p_prayer_zone,auth.uid(),now())
+    on conflict (setting_key) do update
+      set prayer_zone=excluded.prayer_zone,updated_by=excluded.updated_by,updated_at=now()
+    returning community_settings.prayer_zone;
+end;
+$$;
+revoke all on function public.get_community_settings(), public.update_community_settings(text) from public, anon;
+grant execute on function public.get_community_settings(), public.update_community_settings(text) to authenticated;
+
+-- Refresh PostgREST so the attendance RPCs added above are immediately discoverable.
+notify pgrst, 'reload schema';

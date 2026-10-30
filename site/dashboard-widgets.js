@@ -1,7 +1,7 @@
 (() => {
   const $ = selector => document.querySelector(selector);
   const weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=2.9788811&longitude=101.5361309&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=3&timezone=Asia%2FKuala_Lumpur';
-  const prayerUrl = 'https://solat.my/api/daily/SGR01';
+  let prayerZone = 'SGR01';
   const weatherDescription = code => {
     if (code === 0) return ['Cerah', '☀️'];
     if ([1, 2].includes(code)) return ['Cerah berawan', '⛅'];
@@ -54,10 +54,10 @@
     return `${value.year}-${value.month}-${value.day}`;
   }
 
-  async function loadPrayerFromOpenData() {
+  async function loadPrayerFromOpenData(zone) {
     const index = await requestJson('https://sajadah.org/api/v1/regions.json');
-    const region = (index.regions || []).find(item => String(item.zone || '').toUpperCase() === 'SGR01');
-    if (!region?.id) throw new Error('Zon SGR01 tidak dijumpai.');
+    const region = (index.regions || []).find(item => String(item.zone || '').toUpperCase() === zone);
+    if (!region?.id) throw new Error(`Zon ${zone} tidak dijumpai.`);
     const year = Number(malaysiaDate().slice(0, 4));
     const table = await requestJson(`https://sajadah.org/api/v1/times/my/${encodeURIComponent(region.id)}/${year}.json`);
     const fields = table.fields || [];
@@ -70,8 +70,8 @@
     return { fajr: value('fajr'), dhuhr: value('dhuhr'), asr: value('asr'), maghrib: value('maghrib'), isha: value('isha') };
   }
 
-  async function loadPrayerFromSolatMy() {
-    const result = await requestJson(prayerUrl);
+  async function loadPrayerFromSolatMy(zone) {
+    const result = await requestJson(`https://solat.my/api/daily/${encodeURIComponent(zone)}`);
     const day = result.prayerTime?.[0] || result.data?.prayerTime?.[0] || result.data?.[0] || result.data || result;
     return { fajr: day.fajr, dhuhr: day.dhuhr, asr: day.asr, maghrib: day.maghrib, isha: day.isha };
   }
@@ -80,10 +80,10 @@
     const next = $('#nextPrayer'), times = $('#prayerTimes');
     try {
       let day;
-      try { day = await loadPrayerFromOpenData(); }
+      try { day = await loadPrayerFromOpenData(prayerZone); }
       catch (primaryError) {
         console.warn('Sumber jadual terbuka waktu solat tidak tersedia, cuba sumber sandaran.', primaryError);
-        day = await loadPrayerFromSolatMy();
+        day = await loadPrayerFromSolatMy(prayerZone);
       }
       const prayers = [['Subuh', day.fajr], ['Zohor', day.dhuhr], ['Asar', day.asr], ['Maghrib', day.maghrib], ['Isyak', day.isha]];
       if (prayers.some(([, time]) => !displayTime(time).match(/^\d{1,2}:\d{2}$/))) throw new Error('Format waktu solat tidak lengkap.');
@@ -97,11 +97,12 @@
       const nextTime = upcoming || prayers[0];
       next.innerHTML = `Seterusnya: <b>${nextTime[0]} · ${displayTime(nextTime[1])}${upcoming ? '' : ' esok'}</b>`;
       times.innerHTML = prayers.map(([name, time]) => `<div><span>${name}</span><b>${displayTime(time)}</b></div>`).join('');
-      $('#prayerUpdated').textContent = 'Jadual e-Solat JAKIM · Zon SGR01';
+      $('#prayerUpdated').textContent = `Jadual e-Solat JAKIM · Zon ${prayerZone}`;
     } catch (error) {
       console.error('Gagal memuatkan waktu solat Shah Alam:', error);
       next.textContent = 'Waktu solat tidak dapat dimuatkan.';
       times.innerHTML = '<span class="widget-muted">Sumber jadual sedang tidak tersedia. Cuba muat semula sebentar lagi.</span>';
+      $('#prayerUpdated').textContent = `Zon JAKIM ${prayerZone}`;
     }
   }
 
@@ -119,6 +120,14 @@
     if (target) target.textContent = displayAmount;
     if (total) total.textContent = displayAmount;
   };
+
+  window.addEventListener('community-settings-updated', () => {
+    const configuredZone = window.COMMUNITY_SETTINGS?.prayer_zone;
+    if (!['SGR01', 'SGR03'].includes(configuredZone) || configuredZone === prayerZone) return;
+    prayerZone = configuredZone;
+    $('#prayerUpdated').textContent = `Memuatkan zon ${prayerZone}…`;
+    loadPrayerTimes();
+  });
 
   loadWeather();
   loadPrayerTimes();

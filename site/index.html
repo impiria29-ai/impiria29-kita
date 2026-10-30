@@ -14,7 +14,7 @@
   <script>document.documentElement.classList.add('auth-configured')</script>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="styles.css?v=20261030e" />
+  <link rel="stylesheet" href="styles.css?v=20261030h" />
 </head>
 <body>
   <section class="auth-gate" id="authGate" aria-labelledby="authTitle">
@@ -65,6 +65,7 @@
       <a class="nav-link" href="#kewangan" data-page="kewangan"><span class="nav-icon">◉</span> Kewangan</a>
       <p class="nav-label">PENTADBIR</p>
       <a class="nav-link" href="#log" data-page="log"><span class="nav-icon">◷</span> Log perubahan</a>
+      <a class="nav-link hidden" id="adminSettingsNav" href="#tetapan" data-page="tetapan"><span class="nav-icon">⚙</span> Tetapan sistem</a>
     </nav>
     <div class="sidebar-bottom">
       <div class="help-card"><span class="help-icon">✳</span><b>Ada makluman?</b><p>Hubungi kami di <a class="help-email" href="mailto:impiria29@gmail.com">impiria29@gmail.com</a> atau kongsikan berita kepada komuniti.</p><a href="#hebahan" data-goto="hebahan">Tulis hebahan <span>↗</span></a></div>
@@ -94,6 +95,7 @@
       <section class="page" id="page-undian"><div class="page-title-row"><div><p class="eyebrow">SUARA KOMUNITI</p><h1>Undian & Polls</h1><p class="subhead">Dapatkan pandangan penduduk dan lihat keputusan bersama.</p></div><button class="button button-primary" data-open="poll">＋ Cipta poll</button></div><div class="poll-controls" id="pollControls"><label class="poll-household">Isi rumah<select id="activeHousehold"></select></label></div><div id="pollList" class="poll-grid"></div></section>
       <section class="page hidden" id="page-permohonan"><div class="page-title-row"><div><p class="eyebrow">AKSES KOMUNITI</p><h1>Permohonan penduduk</h1><p class="subhead">Semak permohonan baharu dan pautkan akaun kepada nombor rumah yang betul.</p></div><div class="application-total"><span>MENUNGGU SEMAKAN</span><b id="accessApplicationTotal">0</b></div></div><section class="application-list-wrap"><div id="accessApplicationList" class="application-list"><div class="empty-state">Memuatkan permohonan…</div></div></section></section>
       <section class="page hidden" id="page-akaun"><div class="page-title-row"><div><p class="eyebrow">PENGURUSAN AKSES</p><h1>Senarai pengguna / akaun</h1><p class="subhead">Kemaskini butiran dan status akaun. Memadam akaun akan memadam akses log masuk; maklumat isi rumah dikekalkan.</p></div><div class="application-total"><span>JUMLAH AKAUN</span><b id="accountTotal">0</b></div></div><section class="panel toolbar account-toolbar"><label class="search-box"><span>⌕</span><input id="accountSearch" type="search" placeholder="Cari nama atau e-mel..." /></label><button class="button button-secondary" type="button" id="refreshAccountsButton">↻ Muat semula</button></section><div id="accountList" class="account-list"><div class="empty-state">Muatkan senarai akaun…</div></div></section>
+      <section class="page hidden" id="page-tetapan"><div class="page-title-row"><div><p class="eyebrow">PENTADBIRAN SISTEM</p><h1>Tetapan sistem</h1><p class="subhead">Tetapan ini digunakan bersama oleh penduduk taman.</p></div></div><form class="panel system-settings-card" id="systemSettingsForm"><div><span class="settings-icon" aria-hidden="true">☾</span><div><h2>Zon waktu solat</h2><p>Pilih zon rasmi JAKIM yang digunakan untuk kad waktu solat di Ringkasan.</p></div></div><label for="prayerZoneSelect">Zon solat<select id="prayerZoneSelect" name="prayer_zone"><option value="SGR01">SGR01</option><option value="SGR03">SGR03</option></select></label><p class="settings-status" id="settingsStatus" role="status">Tetapan semasa: SGR01</p><div class="settings-actions"><button class="button button-primary" id="saveSettingsButton" type="submit">Simpan tetapan</button></div></form></section>
       <section class="page" id="page-log"><div class="page-title-row"><div><p class="eyebrow">PUSAT PENTADBIR</p><h1>Log perubahan</h1><p class="subhead">Jejak rekod dan tindakan yang berlaku dalam aplikasi.</p></div><div class="audit-count-card"><span>JUMLAH REKOD</span><b id="auditLogCount">0</b></div></div><section class="panel toolbar audit-toolbar"><label class="search-box"><span>⌕</span><input id="auditSearch" placeholder="Cari rekod atau medan yang berubah..." /></label><select id="auditTypeFilter" aria-label="Tapis bahagian"><option value="semua">Semua bahagian</option><option value="announcement">Pengumuman</option><option value="event">Acara</option><option value="transaction">Kewangan</option><option value="household">Isi rumah</option><option value="poll">Poll</option><option value="committee">AJK</option><option value="resident">Status rumah</option><option value="residentNotice">Hebahan</option><option value="committeeRole">Jawatan AJK</option><option value="committeeHistory">Arkib AJK</option></select><select id="auditActionFilter" aria-label="Tapis tindakan"><option value="semua">Semua tindakan</option><option value="Tambah">Tambah</option><option value="Kemaskini">Kemaskini</option><option value="Padam">Padam</option><option value="Undian">Undian</option><option value="Kehadiran">Kehadiran</option><option value="Penerbitan">Penerbitan</option><option value="Sesi baharu">Sesi baharu</option></select></section><div id="auditLogList" class="audit-log-list"></div></section>
     </div>
   </main>
@@ -102,10 +104,10 @@
   <dialog id="residentDialog" class="resident-dialog"><div id="residentDetailContent"></div></dialog>
   <dialog id="editDialog"><form id="editForm" method="dialog"><div class="modal-head"><div><p class="eyebrow" id="modalEyebrow">KOMUNITIPRO</p><h2 id="modalTitle">Tambah baharu</h2></div><button class="close-button" type="button" id="closeModal" aria-label="Tutup">×</button></div><div id="modalFields" class="modal-fields"></div><div class="form-error hidden" id="formError" role="alert"></div><div class="modal-actions"><button type="button" class="button button-quiet" id="cancelModal">Batal</button><button class="button button-primary" id="saveModalButton" type="submit">Simpan</button></div></form></dialog>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js?v=20261030e"></script>
+  <script src="app.js?v=20261030h"></script>
   <script src="accounts.js?v=20261030c"></script>
-  <script src="dashboard-widgets.js?v=20261030e"></script>
-  <script src="auth.js?v=20261030g"></script>
+  <script src="dashboard-widgets.js?v=20261030h"></script>
+  <script src="auth.js?v=20261030h"></script>
 </body>
 </html>
 

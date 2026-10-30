@@ -16,7 +16,8 @@
  }
  async function addEventAttendance(snapshot){window.COMMUNITY_EVENT_ATTENDANCE={};let events=Array.isArray(snapshot?.events)?snapshot.events:[],ids=events.map(event=>String(event.id||'')).filter(Boolean);if(!ids.length)return snapshot;try{let {data,error}=await client.rpc('get_event_attendance',{p_event_ids:ids});if(!error&&Array.isArray(data))for(const item of data)window.COMMUNITY_EVENT_ATTENDANCE[String(item.event_id)]={attendee_count:Number(item.attendee_count||0),attending:Boolean(item.attending)}}catch(error){console.warn('Ringkasan kehadiran acara belum tersedia.',error)}return snapshot}
  async function addPublicBirthdays(snapshot){let {data,error}=await client.rpc('get_public_birthdays');if(!error&&Array.isArray(data))snapshot.publicBirthdays=data;else snapshot.publicBirthdays=[];return snapshot}
- window.refreshCommunitySnapshot=async()=>{let {data:snapshot,error}=await client.rpc('get_app_snapshot');if(error)throw error;await addPollTallies(snapshot);await addEventAttendance(snapshot);await addPublicBirthdays(snapshot);window.activateCommunitySession({client,session:window.COMMUNITY_SESSION.session,profile:window.COMMUNITY_SESSION.profile,snapshot});return snapshot};
+ async function loadCommunitySettings(){window.COMMUNITY_SETTINGS={prayer_zone:'SGR01'};let {data,error}=await client.rpc('get_community_settings');let status=$('#settingsStatus');if(error){if(status)status.textContent='Tetapan pusat belum dipasang. Admin perlu jalankan migration tetapan di Supabase; zon lalai SGR01 digunakan.';window.dispatchEvent(new Event('community-settings-updated'));return}let row=Array.isArray(data)?data[0]:data,zone=['SGR01','SGR03'].includes(row?.prayer_zone)?row.prayer_zone:'SGR01';window.COMMUNITY_SETTINGS={prayer_zone:zone};let select=$('#prayerZoneSelect');if(select)select.value=zone;if(status)status.textContent='Zon waktu solat taman sekarang: '+zone;window.dispatchEvent(new Event('community-settings-updated'))}
+ window.refreshCommunitySnapshot=async()=>{let {data:snapshot,error}=await client.rpc('get_app_snapshot');if(error)throw error;await addPollTallies(snapshot);await addEventAttendance(snapshot);await addPublicBirthdays(snapshot);await loadCommunitySettings();window.activateCommunitySession({client,session:window.COMMUNITY_SESSION.session,profile:window.COMMUNITY_SESSION.profile,snapshot});return snapshot};
  async function activate(session){
    say('');
    let {data:profile,error}=await client.from('profiles').select('user_id,full_name,phone,house_number,requested_house_number,role,approval_status').eq('user_id',session.user.id).single();
@@ -35,6 +36,7 @@
    await addPollTallies(snapshot);
    await addEventAttendance(snapshot);
    await addPublicBirthdays(snapshot);
+   await loadCommunitySettings();
    window.activateCommunitySession({client,session,profile,snapshot});
    document.documentElement.classList.remove('auth-configured');
    $('#logoutButton').classList.remove('hidden');$('#logoutButton').onclick=async e=>{let restore=window.beginAppButtonBusy(e.currentTarget,'Log keluar…');try{await client.auth.signOut();location.reload()}finally{restore?.()}};
