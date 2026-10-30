@@ -433,13 +433,14 @@
   }
 
   window.refreshResidentFinanceSummary = async () => {
-    if (window.COMMUNITY_SESSION?.profile.role !== 'resident') return;
+    if (!['resident', 'ajk'].includes(window.COMMUNITY_SESSION?.profile.role)) return;
     let data = null, error = null;
     try { ({ data, error } = await window.COMMUNITY_SUPABASE.rpc('get_resident_finance_summary')); } catch (caught) { error = caught; }
-    if (window.COMMUNITY_SESSION?.profile.role !== 'resident') return;
+    if (!['resident', 'ajk'].includes(window.COMMUNITY_SESSION?.profile.role)) return;
     window.COMMUNITY_DATA_FINANCE_SUMMARY = error ? null : data;
     const amount = Number(data?.balance), displayAmount = !error && Number.isFinite(amount) ? `RM ${amount.toLocaleString('ms-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—';
     if ($('#statBalance')) $('#statBalance').textContent = displayAmount;
+    if ($('#balanceValue')) $('#balanceValue').textContent = displayAmount;
     if ($('#paymentBalanceTotal')) $('#paymentBalanceTotal').textContent = displayAmount;
   };
   window.addEventListener('community-settings-updated', () => {
