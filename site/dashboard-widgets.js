@@ -17,7 +17,7 @@
   };
   const dayLabel = (date, index) => index === 0 ? 'Hari ini' : new Date(`${date}T12:00:00`).toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'short' });
   const displayTime = value => String(value || '').match(/\d{1,2}:\d{2}/)?.[0] || '—';
-  const number = value => Number.isFinite(Number(value)) ? Number(value) : null;
+  const number = value => value === null || value === undefined || String(value).trim() === '' || !Number.isFinite(Number(value)) ? null : Number(value);
 
   function renderWeatherDay(weather, index, detail = false) {
     const date = weather.daily.time[index], [condition, symbol] = weatherDescription(Number(weather.daily.weather_code[index]));
