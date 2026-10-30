@@ -361,7 +361,7 @@
       $('#prayerMonthHeading').textContent = heading;
       if (!monthRows.length) throw new Error('Jadual bagi bulan ini belum tersedia.');
       const getIndex = name => fields.indexOf(name), dateIndex = getIndex('date');
-      const names = [['fajr', 'Subuh'], ['dhuhr', 'Zohor'], ['asr', 'Asar'], ['maghrib', 'Maghrib'], ['isha', 'Isyak']];
+      const names = [['imsak', 'Imsak'], ['fajr', 'Subuh'], ['sunrise', 'Syuruk'], ['dhuhr', 'Zohor'], ['asr', 'Asar'], ['maghrib', 'Maghrib'], ['isha', 'Isyak']];
       list.innerHTML = (await Promise.all(monthRows.map(async row => {
         const day = String(row[dateIndex]).slice(0, 10), date = new Date(`${day}T12:00:00+08:00`);
         const label = date.toLocaleDateString('ms-MY', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kuala_Lumpur' });
