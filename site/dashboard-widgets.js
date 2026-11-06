@@ -399,14 +399,41 @@
     const day = result.prayerTime?.[0] || result.data?.prayerTime?.[0] || result.data?.[0] || result.data || result;
     return { fajr: day.fajr, dhuhr: day.dhuhr, asr: day.asr, maghrib: day.maghrib, isha: day.isha };
   }
+  async function loadPrayerFromWaktuSolatOnline(zone) {
+    const [year, month] = malaysiaDate().split('-');
+    const result = await requestJson(`https://api.waktusolat.online/api/solat/${encodeURIComponent(zone)}?month=${Number(month)}&year=${year}`, 12000);
+    const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+    const toISODate = value => {
+      const text = String(value || '').trim(), iso = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+      const parts = text.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/);
+      const monthIndex = parts ? monthNames.indexOf(parts[2].toLowerCase()) : -1;
+      return monthIndex < 0 ? '' : `${parts[3]}-${String(monthIndex + 1).padStart(2, '0')}-${String(parts[1]).padStart(2, '0')}`;
+    };
+    const rows = result.prayerTime || result.data?.prayerTime || result.data || [];
+    const day = (Array.isArray(rows) ? rows : [rows]).find(item => toISODate(item?.date) === malaysiaDate());
+    if (!day) throw new Error('Jadual API WaktuSolat.online tidak mengandungi tarikh hari ini.');
+    return { fajr: day.fajr, dhuhr: day.dhuhr, asr: day.asr, maghrib: day.maghrib, isha: day.isha };
+  }
   async function loadPrayerTimes() {
     const next = $('#nextPrayer'), times = $('#prayerTimes');
     try {
-      let day;
-      try { day = await loadPrayerFromOpenData(prayerZone); }
-      catch (primaryError) { console.warn('Sumber jadual terbuka waktu solat tidak tersedia, cuba sumber sandaran.', primaryError); day = await loadPrayerFromSolatMy(prayerZone); }
+      let day, source = '';
+      const sources = [
+        ['API WaktuSolat.online', () => loadPrayerFromWaktuSolatOnline(prayerZone)],
+        ['API Solat.my', () => loadPrayerFromSolatMy(prayerZone)],
+        ['Jadual JAKIM terbuka', () => loadPrayerFromOpenData(prayerZone)]
+      ];
+      let lastError;
+      for (const [name, load] of sources) {
+        try {
+          const candidate = await load();
+          if ([candidate.fajr, candidate.dhuhr, candidate.asr, candidate.maghrib, candidate.isha].every(value => /^\d{1,2}:\d{2}/.test(displayTime(value)))) { day = candidate; source = name; break; }
+          throw new Error('Format waktu solat tidak lengkap.');
+        } catch (error) { lastError = error; console.info(`${name} tidak tersedia; mencuba sumber seterusnya.`, error); }
+      }
+      if (!day) throw lastError || new Error('Semua sumber waktu solat tidak tersedia.');
       const prayers = [['Subuh', day.fajr], ['Zohor', day.dhuhr], ['Asar', day.asr], ['Maghrib', day.maghrib], ['Isyak', day.isha]];
-      if (prayers.some(([, time]) => !displayTime(time).match(/^\d{1,2}:\d{2}$/))) throw new Error('Format waktu solat tidak lengkap.');
       const clock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kuala_Lumpur', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date());
       const [hourNow, minutePart] = clock.split(':').map(Number), minuteNow = hourNow * 60 + minutePart;
       const toMinutes = time => { const match = displayTime(time).match(/^(\d{1,2}):(\d{2})$/); return match ? Number(match[1]) * 60 + Number(match[2]) : null; };
@@ -423,7 +450,7 @@
       $('#prayerProgressFill').style.width = `${progress}%`;
       $('#prayerProgressMarker').style.left = `${progress}%`;
       $('#prayerProgressLabel').textContent = `Menuju ${nextTime[0]} · ${Math.round(progress)}%`;
-      $('#prayerUpdated').textContent = `Jadual e-Solat JAKIM · Zon ${prayerZone}`;
+      $('#prayerUpdated').textContent = `${source} · Data e-Solat JAKIM · Zon ${prayerZone}`;
     } catch (error) {
       console.error('Gagal memuatkan waktu solat Shah Alam:', error);
       next.textContent = 'Waktu solat tidak dapat dimuatkan.';
@@ -458,4 +485,5 @@
   loadRiverReadings();
   loadPrayerTimes();
 })();
+
 
