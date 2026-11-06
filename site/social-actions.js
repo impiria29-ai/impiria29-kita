@@ -27,12 +27,15 @@
   function cardFromTarget(target) { return target.closest('.announcement-card,.event-card,.poll-card,.resident-notice-card'); }
   function decorateCard(card) {
     const info = cardInfo(card);
-    if (!info || $('.social-post-menu', card)) return;
-    const menu = document.createElement('div');
-    menu.className = 'social-post-menu';
-    menu.dataset.postKey = info.key;
-    menu.innerHTML = `<button type="button" class="social-post-more" data-social-menu aria-label="Lagi pilihan untuk ${typeLabel[info.type]}" aria-expanded="false" title="Lagi pilihan">···</button><div class="social-post-options hidden" role="menu"><button type="button" role="menuitem" data-social-action="copy">↗ <span>Salin pautan</span></button><button type="button" role="menuitem" data-social-action="whatsapp">◉ <span>Kongsi ke WhatsApp</span></button><button type="button" role="menuitem" data-social-action="save">▣ <span>Simpan</span></button><button type="button" role="menuitem" data-social-action="star">☆ <span>Tandakan bintang</span></button><button type="button" role="menuitem" data-social-action="hide">⊘ <span>Sembunyikan</span></button></div>`;
-    card.append(menu);
+    if (!info) return;
+    let menu = $('.social-post-menu', card);
+    if (!menu) {
+      menu = document.createElement('div');
+      menu.className = 'social-post-menu';
+      menu.dataset.postKey = info.key;
+      menu.innerHTML = `<button type="button" class="social-post-more" data-social-menu aria-label="Lagi pilihan untuk ${typeLabel[info.type]}" aria-expanded="false" title="Lagi pilihan">···</button><div class="social-post-options hidden" role="menu"><button type="button" role="menuitem" data-social-action="copy">↗ <span>Salin pautan</span></button><button type="button" role="menuitem" data-social-action="whatsapp">◉ <span>Kongsi ke WhatsApp</span></button><button type="button" role="menuitem" data-social-action="save">▣ <span>Simpan</span></button><button type="button" role="menuitem" data-social-action="star">☆ <span>Tandakan bintang</span></button><button type="button" role="menuitem" data-social-action="hide">⊘ <span>Sembunyikan</span></button></div>`;
+      card.append(menu);
+    }
     card.dataset.socialType = info.type;
     card.dataset.socialId = info.id;
     card.classList.toggle('social-post-starred', state.starred.includes(info.key));
@@ -41,6 +44,10 @@
     if (star) star.textContent = state.starred.includes(info.key) ? 'Buang bintang' : 'Tandakan bintang';
     if (save) save.textContent = state.saved.includes(info.key) ? 'Buang daripada simpanan' : 'Simpan';
     if (state.hidden.includes(info.key)) hideCard(card, info.key, false);
+    else {
+      card.hidden = false;
+      if (card.nextElementSibling?.classList.contains('social-hidden-notice')) card.nextElementSibling.remove();
+    }
   }
   function hideCard(card, key, announce = true) {
     card.hidden = true;
