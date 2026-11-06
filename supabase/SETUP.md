@@ -83,3 +83,13 @@ Selepas aplikasi diterbitkan, buka **SQL Editor → New query** di Supabase. Sal
 Selepas migration Bendahari dipasang, jalankan `migrations/20261030_finance_assets_readonly_ajk.sql` di **SQL Editor → New query**. Migration ini membenarkan AJK melihat transaksi pendapatan/perbelanjaan dalam halaman Kewangan, tanpa butang tambah, edit atau padam. Hanya admin dan Bendahari boleh mengurus transaksi serta melihat rekod aset dan liabiliti.
 
 Dalam borang **Rekod transaksi**, pilih jenis **Aset** atau **Liabiliti**, kategori dan jumlah pada tarikh rekod. Kedudukan aset/liabiliti ialah nilai pada tarikh tersebut, bukan aliran tunai. Untuk merekod baki bank, pilih **Aset Semasa — Tunai di Bank** dan gunakan nama akaun yang sama apabila mengemas kini. Kad **Baki dalam bank** mengambil rekod terkini bagi setiap akaun bank; sebelum ada rekod itu, ia mengira pendapatan ditolak perbelanjaan.
+
+
+## 12. Pratonton perkongsian WhatsApp
+
+Pautan post ke WhatsApp menyertakan ringkasan tajuk, butiran dan pilihan poll. Kad pratonton dengan tajuk, petikan dan gambar memerlukan Edge Function awam `share-preview`; fungsi hanya memaparkan pengumuman, acara dan poll yang dipilih, bukan maklumat akaun atau isi rumah.
+
+Deploy dari folder utama repo dengan arahan `supabase functions deploy share-preview --project-ref vxmuditmodaxcfqblxrf`. `supabase/config.toml` menetapkan `verify_jwt = false` supaya crawler WhatsApp boleh membaca tag Open Graph. Butang kongsi menggunakan sesi pengguna untuk meminta pautan bertandatangan; fungsi hanya menerbitkan rekod yang dibenarkan oleh `get_app_snapshot()`. Jika fungsi belum diterbitkan, ia berkongsi pautan app dengan ringkasan teks.
+
+Fungsi menggunakan `SUPABASE_URL` dan `SUPABASE_SERVICE_ROLE_KEY` sebagai secrets persekitaran Supabase. Jangan salin service-role key ke fail app atau ke GitHub. WhatsApp mungkin menyimpan cache pratonton lama seketika; uji pautan dengan post yang baru dibuat atau tunggu cache diperbaharui.
+
