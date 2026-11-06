@@ -44,11 +44,12 @@
    $('#logoutButton').classList.remove('hidden');$('#logoutButton').onclick=async e=>{let restore=window.beginAppButtonBusy(e.currentTarget,'Log keluar…');try{await client.auth.signOut();location.reload()}finally{restore?.()}};
    gate.setAttribute('aria-hidden','true');
  }
+ function beginLoginBusy(button){let restore=window.beginAppButtonBusy?.(button,'Sedang log masuk…');if(restore)return restore;if(!button||button.disabled)return null;let original=button.innerHTML;button.disabled=true;button.setAttribute('aria-busy','true');button.textContent='Sedang log masuk…';return()=>{if(!button.isConnected)return;button.innerHTML=original;button.disabled=false;button.removeAttribute('aria-busy')}}
  $('#authLoginForm').addEventListener('submit',async e=>{
-   e.preventDefault();const form=e.currentTarget,button=form.querySelector('[type="submit"]'),restore=window.beginAppButtonBusy(button,'Sedang log masuk…');if(!restore)return;
-   try{let f=new FormData(form),{data,error}=await client.auth.signInWithPassword({email:String(f.get('email')).trim(),password:String(f.get('password'))});if(error){say(error.code==='email_not_confirmed'?'Rekod e-mel akaun ini masih belum disahkan oleh Supabase. Admin perlu semak Authentication → Users dan sahkan rekod akaun ini. Selepas itu, AJK/admin masih perlu meluluskan permohonan serta memautkan nombor rumah.': 'E-mel atau kata laluan tidak betul. Jika akaun baru diluluskan, cuba log masuk semula atau hubungi admin taman.',true);return}await activate(data.session)}
+   e.preventDefault();const form=e.currentTarget,button=form.querySelector('[type="submit"]');let restore,requestTimer;
+   try{restore=beginLoginBusy(button);if(!restore)return;let f=new FormData(form),request=client.auth.signInWithPassword({email:String(f.get('email')).trim(),password:String(f.get('password'))}),result=await Promise.race([request,new Promise((_,reject)=>{requestTimer=setTimeout(()=>reject(new Error('Sambungan log masuk terlalu lama. Semak internet dan cuba lagi.')),20000)})]),{data,error}=result;if(error){say(error.code==='email_not_confirmed'?'Rekod e-mel akaun ini masih belum disahkan oleh Supabase. Admin perlu semak Authentication → Users dan sahkan rekod akaun ini. Selepas itu, AJK/admin masih perlu meluluskan permohonan serta memautkan nombor rumah.': 'E-mel atau kata laluan tidak betul. Jika akaun baru diluluskan, cuba log masuk semula atau hubungi admin taman.',true);return}await activate(data.session)}
    catch(error){say(error?.message||'Tidak dapat log masuk. Cuba lagi sebentar nanti.',true)}
-   finally{restore()}
+   finally{clearTimeout(requestTimer);restore?.()}
  });
  let signupPending=false;
  $('#authSignupForm').addEventListener('submit',async e=>{
@@ -73,4 +74,5 @@
  client.auth.getSession().then(async({data,error})=>{if(error)say('Tidak dapat menyambung ke Supabase: '+error.message,true);else if(data.session){let restore=window.beginAppButtonBusy($('#authLoginForm [type="submit"]'),'Memuatkan komuniti…');try{await activate(data.session)}catch(err){say(err?.message||'Tidak dapat memuatkan komuniti.',true)}finally{restore?.()}}});
  client.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'&&document.documentElement.classList.contains('auth-configured'))say('Anda telah log keluar.')});
 })();
+
 
