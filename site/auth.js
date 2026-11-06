@@ -3,6 +3,7 @@
  const client=window.supabase?.createClient?.(window.SUPABASE_CONFIG?.url||'',window.SUPABASE_CONFIG?.publishableKey||'');
  if(!client){message.textContent='Sambungan login tidak dapat dimulakan. Muat semula halaman dan semak sambungan internet.';message.classList.add('error');return}
  window.COMMUNITY_SUPABASE=client;
+ try{localStorage.removeItem('komunitipro-demo-v1')}catch{}
  const signupHouse=$('#authSignupForm [name="house_number"]');
  for(let n=1;n<=43;n++){let option=document.createElement('option');option.value=String(n);option.textContent=`Rumah ${String(n).padStart(2,'0')}`;signupHouse.append(option)}
  function say(text,error=false){message.textContent=text;message.classList.toggle('error',error)}
@@ -40,6 +41,7 @@
    const loginAuditKey='community-login-audit:'+session.access_token;
    if(!sessionStorage.getItem(loginAuditKey)){const {error:auditError}=await client.rpc('record_member_login');if(!auditError)sessionStorage.setItem(loginAuditKey,'1');else console.warn('Log masuk tidak dapat direkodkan:',auditError)}
    window.activateCommunitySession({client,session,profile,snapshot});
+   $('#sidebar').hidden=false;$('#menuScrim').hidden=false;document.querySelector('.main-area').hidden=false;
    document.documentElement.classList.remove('auth-configured');
    $('#logoutButton').classList.remove('hidden');$('#logoutButton').onclick=async e=>{let restore=window.beginAppButtonBusy(e.currentTarget,'Log keluar…');try{await client.auth.signOut();location.reload()}finally{restore?.()}};
    gate.setAttribute('aria-hidden','true');
@@ -72,7 +74,7 @@
  document.addEventListener('click',e=>{let b=e.target.closest('[data-auth-switch]');if(b)switchForm(b.dataset.authSwitch)});
  $('#authSignOut').addEventListener('click',async e=>{let restore=window.beginAppButtonBusy(e.currentTarget,'Log keluar…');try{await client.auth.signOut();location.reload()}finally{restore?.()}});
  client.auth.getSession().then(async({data,error})=>{if(error)say('Tidak dapat menyambung ke Supabase: '+error.message,true);else if(data.session){let restore=window.beginAppButtonBusy($('#authLoginForm [type="submit"]'),'Memuatkan komuniti…');try{await activate(data.session)}catch(err){say(err?.message||'Tidak dapat memuatkan komuniti.',true)}finally{restore?.()}}});
- client.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'&&document.documentElement.classList.contains('auth-configured'))say('Anda telah log keluar.')});
+ client.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'){document.documentElement.classList.add('auth-configured');$('#sidebar').hidden=true;$('#menuScrim').hidden=true;document.querySelector('.main-area').hidden=true;gate.setAttribute('aria-hidden','false');$('#logoutButton').classList.add('hidden');say('Anda telah log keluar.')}});
 })();
 
 

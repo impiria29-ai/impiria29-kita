@@ -12,6 +12,7 @@
   <title>Impiria29 Kita — Taman Anggerik Permai 1</title>
   <script src="supabase-config.js?v=20261030c"></script>
   <script>document.documentElement.classList.add('auth-configured')</script>
+  <style>[hidden]{display:none!important}</style>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="styles.css?v=20261106a" />
@@ -44,7 +45,7 @@
       <button class="auth-switch hidden" id="authSignOut" type="button">Log keluar</button>
     </div>
   </section>
-  <aside class="sidebar" id="sidebar">
+  <aside class="sidebar" id="sidebar" hidden>
     <a class="brand" href="#utama" aria-label="Impiria29 Kita, halaman utama">
       <span class="brand-mark"><img src="brand-mark.svg" alt="" /></span>
       <span><b>Impiria<span>29 Kita</span></b><small>KOMUNITI KITA, LEBIH DEKAT</small></span>
@@ -71,8 +72,8 @@
       <button class="profile" type="button" data-edit-profile title="Tekan untuk kemaskini nama profil"><span class="profile-avatar">NP</span><span><b>Nama pengguna</b><small></small></span><span class="dots" aria-hidden="true">✎</span></button>
     </div>
   </aside>
-  <div class="menu-scrim" id="menuScrim" aria-hidden="true"></div>
-  <main class="main-area">
+  <div class="menu-scrim" id="menuScrim" aria-hidden="true" hidden></div>
+  <main class="main-area" hidden>
     <header class="topbar"><button class="menu-toggle" id="menuToggle" type="button" aria-label="Buka menu" aria-expanded="false" aria-controls="sidebar">☰</button><div class="crumb">Komuniti <span>/</span> <b id="crumbName">Ringkasan</b></div><div class="top-actions"><a class="button button-secondary hidden" id="adminSettingsShortcut" href="#tetapan" data-page="tetapan">⚙ <span>Tetapan</span></a><button class="button button-secondary install-app-button" id="installAppButton" type="button" aria-label="Pasang Impiria29 Kita pada telefon">⇩ <span>Pasang app</span></button><button class="button button-quiet hidden" id="logoutButton" type="button">Log keluar</button><button class="button button-secondary floating-back-button" type="button" id="backPageButton" aria-label="Kembali ke halaman sebelumnya">← <span>Kembali</span></button><span class="today-label" id="todayLabel"></span></div></header>
     <div class="page-wrap">
       <section class="page active" id="page-utama">
@@ -110,10 +111,10 @@
   <dialog id="profileDialog" class="profile-dialog"><form id="profileForm"><div class="modal-head"><div><p class="eyebrow">PROFIL PENGGUNA</p><h2>Kemaskini nama anda</h2></div><button class="close-button" type="button" data-close-profile aria-label="Tutup">×</button></div><label class="profile-name-field">Nama penuh<input id="profileFullName" type="text" maxlength="120" autocomplete="name" required></label><p id="profileFormError" class="profile-form-error" role="alert"></p><div class="modal-actions"><button class="button button-quiet" type="button" data-close-profile>Batal</button><button class="button button-primary" id="saveProfileButton" type="submit">Simpan nama</button></div></form></dialog>
   <dialog id="editDialog"><form id="editForm" method="dialog"><div class="modal-head"><div><p class="eyebrow" id="modalEyebrow">KOMUNITIPRO</p><h2 id="modalTitle">Tambah baharu</h2></div><button class="close-button" type="button" id="closeModal" aria-label="Tutup">×</button></div><div id="modalFields" class="modal-fields"></div><div class="form-error hidden" id="formError" role="alert"></div><div class="modal-actions"><button type="button" class="button button-quiet" id="cancelModal">Batal</button><button class="button button-primary" id="saveModalButton" type="submit">Simpan</button></div></form></dialog>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js?v=20261106d"></script>
+  <script src="app.js?v=20261106e"></script>
   <script src="accounts.js?v=20261030d"></script>
   <script src="dashboard-widgets.js?v=20261106a"></script>
-  <script src="auth.js?v=20261106b"></script>
+  <script src="auth.js?v=20261106c"></script>
   <script src="social-actions.js?v=20261106a"></script>
 </body>
 </html>
