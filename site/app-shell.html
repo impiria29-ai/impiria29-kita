@@ -115,7 +115,10 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     (async function loadCommunityApp() {
-      if (new URLSearchParams(location.search).get('access') !== 'df4a409cf195224be395d295147b5551e50c7dbe7974121ab226413343b6c54e') {
+      const access = new URLSearchParams(location.search).get('access');
+      const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(access || ''));
+      const accessHash = [...new Uint8Array(digest)].map(value => value.toString(16).padStart(2, '0')).join('');
+      if (accessHash !== 'fce2da4aae1cac8de58ec5d05ff6eb3265d002030040b938a074b2d9bf028467') {
         location.replace('./?refresh=maintenance-20261106');
         return;
       }
