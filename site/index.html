@@ -54,7 +54,11 @@
     <p class="footer">Terima kasih atas kesabaran anda · Komuniti Kita Lebih Dekat</p>
   </main>
   <script>
-    if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    const privateKey = 'df4a409cf195224be395d295147b5551e50c7dbe7974121ab226413343b6c54e';
+    const access = new URLSearchParams(location.search).get('access');
+    if (access === privateKey) {
+      location.replace('./app-shell.html?access=' + encodeURIComponent(access) + (location.hash || '#utama'));
+    } else if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
       navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(reg => reg.update()).catch(() => {});
     }
   </script>
