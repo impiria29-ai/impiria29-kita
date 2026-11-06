@@ -121,7 +121,7 @@
         document.body.appendChild(script);
       });
       try {
-        const response = await fetch('./app.js?v=20261106g', { cache: 'no-store' });
+        const response = await fetch('./app.js?v=20261106h', { cache: 'no-store' });
         if (!response.ok) throw new Error('Gagal memuat fungsi aplikasi.');
         let source = await response.text();
         source = source.replace(/^Warning: truncated output[^\n]*\nTotal output lines:\s*\d+\n/i, '');
