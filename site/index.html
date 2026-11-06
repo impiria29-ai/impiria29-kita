@@ -124,7 +124,7 @@
         const response = await fetch('./app.js?v=20261106f', { cache: 'no-store' });
         if (!response.ok) throw new Error('Gagal memuat fungsi aplikasi.');
         let source = await response.text();
-        source = source.replace(/^Warning: truncated output[^\\r\\n]*\\r?\\nTotal output lines:\\s*\\d+\\r?\\n/i, '');
+        source = source.replace(/^Warning: truncated output[^\n]*\nTotal output lines:\s*\d+\n/i, '');
         const appScript = document.createElement('script');
         appScript.textContent = source;
         document.head.appendChild(appScript);
