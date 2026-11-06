@@ -15,7 +15,7 @@
   <style>[hidden]{display:none!important}</style>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="styles.css?v=20261106a" />
+  <link rel="stylesheet" href="styles.css?v=20261106b" />
 </head>
 <body>
   <section class="auth-gate" id="authGate" aria-labelledby="authTitle">
@@ -111,11 +111,34 @@
   <dialog id="profileDialog" class="profile-dialog"><form id="profileForm"><div class="modal-head"><div><p class="eyebrow">PROFIL PENGGUNA</p><h2>Kemaskini nama anda</h2></div><button class="close-button" type="button" data-close-profile aria-label="Tutup">×</button></div><label class="profile-name-field">Nama penuh<input id="profileFullName" type="text" maxlength="120" autocomplete="name" required></label><p id="profileFormError" class="profile-form-error" role="alert"></p><div class="modal-actions"><button class="button button-quiet" type="button" data-close-profile>Batal</button><button class="button button-primary" id="saveProfileButton" type="submit">Simpan nama</button></div></form></dialog>
   <dialog id="editDialog"><form id="editForm" method="dialog"><div class="modal-head"><div><p class="eyebrow" id="modalEyebrow">KOMUNITIPRO</p><h2 id="modalTitle">Tambah baharu</h2></div><button class="close-button" type="button" id="closeModal" aria-label="Tutup">×</button></div><div id="modalFields" class="modal-fields"></div><div class="form-error hidden" id="formError" role="alert"></div><div class="modal-actions"><button type="button" class="button button-quiet" id="cancelModal">Batal</button><button class="button button-primary" id="saveModalButton" type="submit">Simpan</button></div></form></dialog>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js?v=20261106e"></script>
-  <script src="accounts.js?v=20261030d"></script>
-  <script src="dashboard-widgets.js?v=20261106a"></script>
-  <script src="auth.js?v=20261106c"></script>
-  <script src="social-actions.js?v=20261106a"></script>
+  <script>
+    (async function loadCommunityApp() {
+      const loadScript = src => new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = () => reject(new Error('Gagal memuat ' + src));
+        document.body.appendChild(script);
+      });
+      try {
+        const response = await fetch('./app.js?v=20261106f', { cache: 'no-store' });
+        if (!response.ok) throw new Error('Gagal memuat fungsi aplikasi.');
+        let source = await response.text();
+        source = source.replace(/^Warning: truncated output[^\\r\\n]*\\r?\\nTotal output lines:\\s*\\d+\\r?\\n/i, '');
+        const appScript = document.createElement('script');
+        appScript.textContent = source;
+        document.head.appendChild(appScript);
+        await loadScript('./accounts.js?v=20261030d');
+        await loadScript('./dashboard-widgets.js?v=20261106a');
+        await loadScript('./auth.js?v=20261106c');
+        await loadScript('./social-actions.js?v=20261106a');
+      } catch (error) {
+        const message = document.querySelector('#authMessage');
+        if (message) message.textContent = 'Aplikasi belum dapat dimuat sepenuhnya. Sila muat semula halaman.';
+        console.error('Gagal memulakan Impiria29 Kita:', error);
+      }
+    })();
+  </script>
 </body>
 </html>
 
