@@ -238,7 +238,7 @@
         ));
         const fields = ['date', 'hijri', 'imsak', 'fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
         const days = months.flatMap((result, monthIndex) => (result.prayerTime || []).map(item => {
-          const match = String(item.date || '').match(/^(\\d{1,2})-([A-Za-z]{3})-(\\d{4})$/);
+          const match = String(item.date || '').match(/^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/);
           const month = match ? monthNames.indexOf(match[2].toLowerCase()) + 1 : monthIndex + 1;
           const date = match ? `${match[3]}-${String(month).padStart(2, '0')}-${match[1].padStart(2, '0')}` : '';
           return [date, item.hijri || '', item.imsak || item.imsaak || '', item.fajr || '', item.syuruk || item.sunrise || '', item.dhuhr || '', item.asr || '', item.maghrib || '', item.isha || ''];
