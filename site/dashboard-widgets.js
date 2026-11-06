@@ -223,12 +223,29 @@
     const key = `${zone}:${year}`;
     if (prayerYearCache.has(key)) return prayerYearCache.get(key);
     const request = (async () => {
-      const index = await requestJson('https://sajadah.org/api/v1/regions.json');
-      const region = (index.regions || []).find(item => String(item.zone || '').toUpperCase() === zone);
-      if (!region?.id) throw new Error(`Zon ${zone} tidak dijumpai.`);
-      const table = await requestJson(`https://sajadah.org/api/v1/times/my/${encodeURIComponent(region.id)}/${year}.json`);
-      if (!Array.isArray(table.days) || !Array.isArray(table.fields)) throw new Error('Jadual tahunan waktu solat tiada format yang dikenali.');
-      return table;
+      try {
+        const index = await requestJson('https://sajadah.org/api/v1/regions.json');
+        const region = (index.regions || []).find(item => String(item.zone || '').toUpperCase() === zone);
+        if (!region?.id) throw new Error(`Zon ${zone} tidak dijumpai.`);
+        const table = await requestJson(`https://sajadah.org/api/v1/times/my/${encodeURIComponent(region.id)}/${year}.json`);
+        if (!Array.isArray(table.days) || !Array.isArray(table.fields)) throw new Error('Jadual tahunan waktu solat tiada format yang dikenali.');
+        return table;
+      } catch (primaryError) {
+        console.info('Sumber Sajadah tidak dapat dicapai; cuba sumber sandaran waktu solat.', primaryError);
+        const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+        const months = await Promise.all(Array.from({ length: 12 }, (_, index) =>
+          requestJson(`https://api.waktusolat.online/api/solat/${encodeURIComponent(zone)}?month=${index + 1}&year=${year}`)
+        ));
+        const fields = ['date', 'hijri', 'imsak', 'fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
+        const days = months.flatMap((result, monthIndex) => (result.prayerTime || []).map(item => {
+          const match = String(item.date || '').match(/^(\\d{1,2})-([A-Za-z]{3})-(\\d{4})$/);
+          const month = match ? monthNames.indexOf(match[2].toLowerCase()) + 1 : monthIndex + 1;
+          const date = match ? `${match[3]}-${String(month).padStart(2, '0')}-${match[1].padStart(2, '0')}` : '';
+          return [date, item.hijri || '', item.imsak || item.imsaak || '', item.fajr || '', item.syuruk || item.sunrise || '', item.dhuhr || '', item.asr || '', item.maghrib || '', item.isha || ''];
+        }));
+        if (!days.length) throw new Error('Sumber sandaran tidak memulangkan jadual waktu solat.');
+        return { fields, days };
+      }
     })();
     prayerYearCache.set(key, request);
     try { return await request; } catch (error) { prayerYearCache.delete(key); throw error; }
